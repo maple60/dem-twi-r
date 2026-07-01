@@ -1,0 +1,6 @@
+# Example local paths for DEM/TWI analysis.
+# Copy this file to .Renviron and edit paths for your machine.
+# Keep .Renviron out of git because it is machine-specific.
+
+# Store source DEMs and final results in a synced folder if useful.
+DEM_TWI_DATA_DIR="C:/Users/your-name/Dropbox/dem-twi/data"
