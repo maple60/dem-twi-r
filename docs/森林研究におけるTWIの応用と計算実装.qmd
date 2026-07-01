@@ -1,0 +1,314 @@
+---
+title: "森林研究におけるTWIの応用と計算実装"
+lang: ja
+format:
+  html:
+    toc: true
+    toc-depth: 3
+---
+## エグゼクティブサマリ
+
+Topographic Wetness Index（TWI、地形湿潤指数）は、流入しうる上流寄与面積と局所傾斜から、地形が相対的に「湿りやすい」かを表す地形指標で、もともとは TOPMODEL の理論背景の中で整理された。標準形は **ln(a / tanβ)** で、`a` は等高線長あたりの上流寄与面積（specific catchment area, SCA）、`β` は局所傾斜角である。Beven & Kirkby の原論文とその後の整理では、この指数は「飽和しやすさ」の地形的な近似であり、厳密な土壌水分そのものではないが、地形制御を要約する簡潔な指標として広く使われてきた。
+
+森林分野での主要用途は、土壌水分・地下水位・湿潤度の proxy、植生分布や下層植生群集の説明、樹種生産力や site index の推定、森林土壌型や土壌炭素・窒素の空間分布推定、森林道路や雪害などの立地リスク評価である。英語圏では森林植生・土壌水分との対応を精査した研究が多く、日本ではスギ人工林の地位指数推定、森林土壌型推定、土壌 C/N 蓄積の地形制御評価に利用されている。
+
+実務上の最大の論点は、**TWI そのものより前段の DEM 処理と flow-routing algorithm の選択**にある。Sørensen ら、Kopecký ら、Riihimäki らは、TWI の説明力が DEM 解像度、凹地処理、平坦地処理、流向アルゴリズムに強く依存することを示している。単流向の D8 は流路を鋭く描きやすい一方で尾根・凸地形で人工的な集中を起こしやすく、森林の土壌水分や植生のような「分散流」を扱う用途では、MFD 系や D∞ 系がしばしば有利だった。もっとも、最良の解像度やアルゴリズムは一意ではなく、研究対象の斜面形状、DEM 品質、検証データの時間スケールに依存する。
+
+R と Python では、**地形微分は `terra` / `richdem` / `xrspatial`、水文学的前処理と集水計算は `whitebox` / `RSAGA` / `GRASS` / `TauDEM` / `pysheds` に任せる**のが実用的である。`terra` や `rasterio` / `rioxarray` は基盤 I/O と傾斜計算に向き、`whitebox` は D8・FD8・D∞ 系や凹地 breach/fill を比較的再現性高く自動化しやすい。QGIS は SAGA・GRASS・TauDEM・WhiteboxTools を Processing から統合でき、ArcGIS Pro は Flow Direction / Flow Accumulation / Slope / Raster Calculator を組み合わせ、ModelBuilder で標準化できる。
+
+森林研究向けの推奨は次の通りである。小規模・高精細の LiDAR 解析では、**breach/fill → slope → D∞ か FD8/MFD → SCA → TWI → 現地土壌水分/地下水位/植生データで検証**が第一選択になる。広域の 5–10 m DEM を使う場合は、まず D8 と MFD/D∞ の感度比較を行い、指標の頑健性を確認する。大規模領域では、ArcGIS の並列処理、GRASS の disk-swap mode、SAGA の parallelizable flow accumulation、Whitebox の並列実装、xarray-spatial + Dask/CuPy の分散計算を使い分けるのが現実的である。
+
+## TWIの定義と理論基盤
+
+TWI の標準定義は **λ = ln(a / tanβ)** である。ここで `a` はそのセルを通過する等高線長あたりの上流寄与面積、`β` は局所傾斜角で、GRASS `r.topidx` と Whitebox の `WetnessIndex` はこの形をそのまま採っている。Beven & Kirkby の TOPMODEL 史をまとめたレビューでも、地形指数の核は `a / tanβ` にあり、地形が動的な飽和寄与域をどう形づくるかをパーシモニアスに表現するための指標として導入されたと整理されている。
+
+ただし、TWI は「静的な地形指数」であって、土壌水分や地下水位の物理過程を完全に表すわけではない。Riihimäki らは、現地土壌水分との関係は全体として modest であり、最良条件でも説明力は限定的であると報告した。Rinderer らも、TWI と浅層地下水位の関係は時間的に一定ではなく、降雨イベント開始時には相関が弱まることを示した。したがって、森林で TWI を使うときは、**「湿潤条件の地形的な可能性」**を表す proxy と理解するのが妥当である。
+
+TWI の実装にはいくつかの変種がある。もっとも基本的なのは Beven & Kirkby 型の標準 TWI で、GIS 実装では Whitebox や GRASS `r.topidx` が近い。SAGA には標準の **Topographic Wetness Index** ツールに加え、**SAGA Wetness Index** があり、後者は “modified catchment area” を用いて谷底付近の湿潤ポテンシャルを標準 TWI より高く見積もるよう設計されている。SAGA Wetness Index は、area type、slope type、suction、slope offset などのパラメータを持ち、谷底の薄膜流仮定を緩めた指数と考えると理解しやすい。
+
+さらに、同じ `ln(a / tanβ)` でも、`a` の定義が異なる。ここで重要なのは次の区別である。総集水面積（TCA）をそのまま使う実装、セルサイズで割った **pseudo specific catchment area** を使う実装、流幅を考慮して SCA に変換する実装が混在する。SAGA の TWI ツールは “no conversion” と “1 / cell size” を切り替えられ、SAGA の Flow Width and Specific Catchment Area ツールは、TCA から flow width と SCA を作り分ける。Kopecký らのガイドラインでは、流量配分アルゴリズムの影響が大きい一方、flow width の扱いは比較的小さいが無視はできず、計算式の細部が統計結果を変えうることが示されている。
+
+TWI 実装で頻出する数値問題は、**傾斜が極小またはゼロのセル**である。Whitebox は slope = 0 のセルに 32767 という任意の高値を入れる仕様で、ArcGIS の `Ln` は入力が 0 以下だと NoData になる。したがって、極平坦地を含む森林湿地や谷底では、最小傾斜の下限値を設ける、SAGA Wetness Index のような修正版を用いる、あるいは結果を分位階級で解釈するのが安全である。
+
+```{mermaid}
+flowchart LR
+    A["DEM取得"] --> B["投影と解像度確認"]
+    B --> C["欠損・凹地・平坦地処理"]
+    C --> D["傾斜計算"]
+    C --> E["流向計算 D8 MFD D∞"]
+    E --> F["流量蓄積とSCA"]
+    D --> G["TWI計算 ln(a / tanβ)"]
+    F --> G
+    G --> H["可視化"]
+    G --> I["現地土壌水分・地下水位・植生で検証"]
+```
+
+上の流れは、QGIS の TWI モデル作成チュートリアル、ArcGIS の Flow Direction / Flow Accumulation ワークフロー、Whitebox の hydrological workflow、GRASS/SAGA の公式実装に共通する最小構成を抽象化したものだ。
+
+## 森林分野での用途と主要研究
+
+森林分野での TWI 利用は、大きく分けると **水分環境の proxy、植生・群集応答、森林生産力、森林土壌・炭素窒素、リスク評価**に整理できる。代表文献を先に表でまとめる。
+
+| 研究テーマ | 代表文献 | 主な対象 | 主要な示唆 |
+|---|---|---|---|
+| TWIの起源・TOPMODEL | Beven & Kirkby 1979 | 小〜中流域水文 | 地形指数 `a/tanβ` に基づく variable contributing area の理論基盤 |
+| TWI計算手法の比較 | Sørensen et al. 2006 | 現地観測つき景観 | アルゴリズムと slope 定義で TWI の説明力が変わる |
+| 森林植生への適用 | Kopecký & Čížková 2010 | チェコの森林植生 | flow-routing の選択で植生との相関が大きく変化 |
+| 森林土壌水分の計算法指針 | Kopecký et al. 2021 | 温帯林の土壌水分・植物群集 | D8 はしばしば不利、MFD 系が優位な場面が多い |
+| 地形と土壌水分の関係 | Riihimäki et al. 2021 | 5,200プロット、46,000超の観測 | 最良は 2 m + MFD 系、ただし総じて説明力は限定的 |
+| 長期土壌水分 proxy 評価 | Winzeler et al. 2022 | アグロフォレストリー catena | 546 通りの TWI を比較し、前処理・一般化の影響を定量化 |
+| 地下水位との対応 | Rinderer et al. 2014 | 急峻な前アルプス流域 | TWI 仮定の妥当性は時期依存で一定ではない |
+| 森林組成・生産力 | Iverson et al. 1997 | GIS由来 moisture index | 森林組成・site productivity 予測に湿潤指標が有効 |
+| スギ地位指数の推定 | Mitsuda et al. 2007 | 宮崎県スギ人工林 | GIS 由来地形要因が site index を説明 |
+| スギ林の土壌C/N・生産力 | Zushi 2006 | 富山のスギ林 | 地形指標で soil C/N storage と site productivity の空間差を評価 |
+| 森林土壌型とTWI | 稲垣ら 2018 | 全国森林土壌データ | 湿潤型の土壌ほど TWI が高くなる傾向 |
+| 森林分野での技術解説 | 森林総研九州 2018 | 九州の土壌情報推定 | 5 m と 10 m DEM で TWI が異なり、解像度感度が大きい |
+
+森林生態学では、Kopecký & Čížková が 11 種類の flow-routing algorithm を比較し、森林植物群落と TWI の対応がアルゴリズム選択で大きく変わることを示した。温帯林の土壌水分と植物種組成を使った Kopecký らの後続研究でも、もっともよく使われがちな D8 は、FD8 などの複数流向法より説明力がかなり低い場合があり、**森林の植生・土壌水分用途では “どの TWI でも同じ” ではない**ことが強調された。
+
+森林水文学では、Rinderer らが急峻な森林流域で浅層地下水位との対応を調べ、TWI が平均的な空間パターンをある程度捉えても、イベント中は steady-state 仮定が崩れやすいことを示した。Riihimäki らも、大規模な土壌水分観測から、TWI は使えるが万能ではなく、流向法と DEM 解像度に強く左右されると結論した。つまり、森林流域で TWI を使う場合、**定常状態に近い平均的湿潤度の地形制約**として使うのは合理的だが、イベント時水分動態や樹冠遮断・根系吸水まで説明するものではない。
+
+森林生産力の文脈では、日本のスギ人工林研究が重要である。Mitsuda らは宮崎県のスギ plantation で GIS 由来地形要因を用いた site index モデルを構築し、DEM 品質や解析スケールがモデル性能に効くことを後続研究で示した。Zushi は富山県のスギ林で soil C and N storage と site productivity の景観スケール変動を digital terrain modeling で評価した。森林総研九州の解説資料と稲垣らの全国比較では、TWI が褐色森林土の土壌型や乾湿傾向と対応しうることが示され、日本の森林立地診断において TWI が実務的な補助変数になりうることが分かる。
+
+応用範囲はさらに広く、森林道路の排水不良や表面損傷の評価、冠雪害などの地形的危険度評価にも拡張されている。LiDAR ベースの道路品質研究では，道路面・側溝・集水の幾何学を把握する補助指標として湿潤関連地形量が利用され、日本の冠雪害研究でも TWI が地形要因の一つとして採用されている。これらは「森林そのもの」だけでなく、**森林管理インフラと攪乱リスク**に TWI が浸透していることを示す。
+
+総合すると、森林分野での TWI の長所は、土壌水分を直接観測しなくても DEM だけで広域推定できる点にある。一方、弱点は、樹冠遮断、土壌深、母材、透水性、人工排水、林道切土盛土など、森林の重要因子を直接含まない点である。そのため、TWI は**単独の説明変数より、地質・土壌・気候・距離 to stream・日射量・開度と併用する地形湿潤 proxy**として使うのが最も成功しやすい。
+
+## DEM入力条件と流域解析アルゴリズム
+
+TWI の入力条件として第一に重要なのは DEM の座標系である。TWI は面積と傾斜を組み合わせるため、**地理座標の度単位より、投影済みのメートル系 CRS**で扱う方が安全だ。`terra::terrain()` は CRS を参照して planar と lon/lat を区別し、Rasterio も CRS と affine transform を明示的に保持する。ここから導ける実務上の原則は、研究対象が狭域〜中域の森林なら、まず等距離・等面積に近い適切な投影へそろえてから前処理と水文解析を行うことだ。これは公式ドキュメントからの実務的推論である。
+
+解像度については、固定的な最適値はない。Riihimäki らの boreal 研究では 1–30 m の比較で 2 m + MFD 系が最も高い性能を示したが、全体として説明力は高すぎなかった。Winzeler らの多期間比較でも DEM 一般化と計算法の影響が大きく、森林総研九州は 5 m と 10 m DEM で TWI 値が大きく変わると報告している。したがって、森林研究では、おおむね **微地形やゼロ次谷を見たいなら 1–5 m LiDAR DTM、広域比較や既往全国データとの整合性を重視するなら 5–10 m DEM** が現実的な出発点になる。これは複数研究を統合した推奨である。
+
+前処理では、穴埋め、凹地処理、平坦地処理が必須に近い。SAGA の Wang & Liu sink fill は、凹地を埋めながら flow path に最小勾配を保持できる。GRASS `r.fill.dir` は depressionless DEM と flow direction map を同時に生成する。Whitebox には least-cost breaching があり、ArcGIS Fill は sink depth に基づく `z-limit` を設定できる。凹地を「埋める」か「切り開く」かは DEM の性質に依存し、LiDAR 由来微地形や湿地・轍を重要視する森林作業道や谷頭部研究では、過度の fill が本物の微地形を消す危険がある。
+
+スムージングは二面性がある。ArcGIS の Slope / Surface Parameters は、高解像度データでウィンドウサイズを広げるとノイズを抑えられることを示している一方、森林研究ではスムージングが谷頭や路網周辺の微地形を消しうる。Kopecký らや Winzeler らの結果を見ると、前処理は有効だが、**強い平滑化は“湿潤度を表す微地形情報”そのものを薄める**ことがある。したがって、平滑化は標準処理ではなく感度分析対象にするのがよい。
+
+流域解析アルゴリズムは、TWI の性質を最も強く左右する。主要法を整理すると次のようになる。
+
+| アルゴリズム | 基本発想 | 長所 | 弱点 | 代表実装 |
+|---|---|---|---|---|
+| D8 | 最急降下する1近傍へ全流量を配分 | 流路が明瞭、計算が速い | 格子依存、凸地形で過集中 | ArcGIS D8、GRASS SFD、SAGA D8、pysheds D8 |
+| FD8 / Quinn / Freeman 系 MFD | 全ての下方近傍へ勾配比例で分配 | 分散流や尾根近傍に強い | 流路がにじみやすい | SAGA MFD、Whitebox FD8、GRASS MFD default |
+| Holmgren | MFD に収束パラメータを追加 | 収束度を調整可能 | パラメータ選定が必要 | RichDEM／文献比較で頻出 |
+| D∞ | 三角 facet の最急方向を連続角として計算し2近傍へ分配 | D8より格子依存が小さい、流路も保ちやすい | 谷底や複雑微地形で万能ではない | TauDEM、ArcGIS DINF、RichDEM、SAGA parallelizable |
+| Qin adaptive MFD | 地形条件に応じ flow-partition exponent を適応化 | 収束・分散を局所地形に合わせやすい | 実装差が大きい | ArcGIS MFD が採用 |
+| TMFD | 三角形ベースの multiple flow | D∞ の改良系 | 実装が限られる | 文献中心 |
+
+森林で土壌水分や植生を説明したい場合、文献上は MFD 系や D∞ 系が優勢なことが多い。Kopecký らは D8 が植生・土壌水分への当てはまりで不利になりやすいと報告し、Riihimäki らも multiple-flow-direction algorithms の方が DEM 誤差に頑健だったと述べている。ただし、排水ネットワーク抽出や stream initiation 閾値設定のように、流路を鋭く出したい場合は D8 に利がある。要するに、**“湿潤度 proxy” には分散流法、“河道抽出” には単流向法**が有利になりやすい。
+
+流路長と流域面積にも注意が必要だ。`a` に入れるべきは単なる cell count ではなく、原則として **等高線長あたりの寄与面積**である。SAGA は Flow Width and Specific Catchment Area を別ツールで計算でき、TauDEM D-Infinity Contributing Area は “specific catchment area within dispersed flow” を意図している。D8 では `(flow accumulation + 1) × cellsize` で疑似 SCA に近似する簡便法がよく使われるが、これは厳密な flow width を明示していない。森林研究でアルゴリズム比較をするなら、**TCA と SCA を混同しないこと**が最重要の実務ポイントになる。
+
+## R・Python・GISでの計算実装
+
+R では、**`terra` を I/O・傾斜計算の土台にし、TWI 本体は `whitebox` か `RSAGA` に任せる**のが今の標準解に近い。`terra::terrain()` は slope と flowdir を計算できるが、flowdir は tie の扱いが単純で、連結した排水網の生成には理想的でないとドキュメント自体が注意している。`RSAGA` は SAGA の hydrology を R から呼び出せ、`rsaga.wetness.index()` で SAGA Wetness Index を扱える。`whitebox` は `wbt_breach_depressions_least_cost()`, `wbt_d8_flow_accumulation()`, `wbt_fd8_flow_accumulation()`, `wbt_wetness_index()` などが揃っている。なお、ユーザーが挙げた `hydat` は TWI 計算用ではなく、現在は `tidyhydat` がカナダの水文観測データを扱うパッケージで、TWI の現地検証に使う側の道具だ。
+
+`topmodel` パッケージは、理論学習や TOPMODEL 再現には有用だが、2024-11-11 に CRAN から archived されている。また、`topmodel()` は raster から直接 TWI を作るのではなく、`make.classes()` で作る `topidx` クラス分布を入力に取る。別途、旧 `topidx()` は DEM 行列から topographic index を計算できるが、現在の R 環境では「生の raster TWI 作成」より、`whitebox` や `RSAGA` と組み合わせる方が再現性も保守性も高い。
+
+### Rの実用スニペット
+
+以下は `terra` + `whitebox` を使う最短系の例だ。前処理・傾斜・集水・TWI をすべて実行できる。関数名と入出力要件は `terra` と `whitebox` の公式ドキュメントに基づく。
+
+```r
+library(terra)
+library(whitebox)
+
+# 入力
+dem <- rast("dem.tif")
+
+# 可能なら先に投影を確認・統一
+crs(dem)
+
+# 傾斜は Whitebox の wetness_index が degree を期待する
+slope_deg <- terrain(dem, v = "slope", unit = "degrees", neighbors = 8)
+writeRaster(slope_deg, "slope_deg.tif", overwrite = TRUE)
+
+# DEM 前処理
+wbt_breach_depressions_least_cost(
+  dem = "dem.tif",
+  output = "dem_breached.tif",
+  dist = 20,
+  fill = TRUE
+)
+
+# D8 または FD8 で集水量
+wbt_fd8_flow_accumulation(
+  input = "dem_breached.tif",
+  output = "sca_fd8.tif"
+)
+
+# TWI
+wbt_wetness_index(
+  sca   = "sca_fd8.tif",
+  slope = "slope_deg.tif",
+  output = "twi_fd8.tif"
+)
+```
+
+SAGA 系を R から使いたい場合は `RSAGA` がよい。これは標準 TWI ではなく **SAGA Wetness Index** を計算する点が重要だ。入力は通常 SAGA grid で、`area.type`, `slope.type`, `suction`, `slope.offset` などを明示できる。谷底寄りの湿潤推定を重視する日本の森林土壌・立地研究では、この系統が有益なことがある。
+
+```r
+library(RSAGA)
+
+env <- rsaga.env()
+
+rsaga.wetness.index(
+  in.dem = "dem.sgrd",
+  out.wetness.index = "swi.sgrd",
+  area.type = "specific",
+  slope.type = "catchment",
+  suction = 10,
+  slope.min = 0,
+  slope.offset = 0.1,
+  env = env
+)
+```
+
+Python では、用途が三つに分かれる。**高速で多アルゴリズム比較なら `whitebox` / `richdem`、簡明な D8 流域解析なら `pysheds`、大規模並列を見据えるなら `rioxarray` + `xarray-spatial`** という整理が実務的だ。Whitebox Python package は WhiteboxTools の snake_case API を使え、例として `feature_preserving_smoothing`, `breach_depressions`, `d_inf_flow_accumulation` が公式に示されている。RichDEM は D8・D∞ など複数 flow metrics、depression filling、terrain attributes を持つ高性能ライブラリだ。Pysheds は DEM conditioning, D8 flowdir, accumulation, catchment, HAND などを一連で扱いやすい。Rasterio / rioxarray は GeoTIFF I/O と CRS 管理、xarray-spatial は D8・D∞・MFD の hydrology 関数を持ち、Dask/CuPy backend でスケールする。
+
+### Pythonの実用スニペット
+
+最も実務的なのは Whitebox ベースの実装だ。公式チュートリアル例に沿えば、DEM conditioning → D∞ accumulation → slope → wetness index の順で組める。
+
+```python
+import whitebox
+
+wbt = whitebox.WhiteboxTools()
+wbt.set_working_dir(".")
+
+# 1) 前処理
+wbt.breach_depressions_least_cost(
+    dem="dem.tif",
+    output="dem_breached.tif",
+    dist=20,
+    fill=True
+)
+
+# 2) 傾斜（degree）
+wbt.slope(
+    dem="dem_breached.tif",
+    output="slope_deg.tif"
+)
+
+# 3) 集水量（例: D-infinity または FD8）
+wbt.d_inf_flow_accumulation(
+    i="dem_breached.tif",
+    output="sca_dinf.tif"
+)
+
+# 4) TWI
+wbt.wetness_index(
+    sca="sca_dinf.tif",
+    slope="slope_deg.tif",
+    output="twi_dinf.tif"
+)
+```
+
+Pysheds は教育用・中規模処理には非常に便利だが、公式の中心は D8 である。したがって、**pysheds は flowdir/accumulation/catchment に使い、TWI は別に用意した slope raster と numpy で合成する**のが現実的だ。
+
+```python
+import numpy as np
+from pysheds.grid import Grid
+import rasterio
+
+grid = Grid.from_raster("dem.tif")
+dem = grid.read_raster("dem.tif")
+
+# 前処理
+pit_filled = grid.fill_pits(dem)
+dep_filled = grid.fill_depressions(pit_filled)
+inflated   = grid.resolve_flats(dep_filled)
+
+# D8 flow direction & accumulation
+dirmap = (64, 128, 1, 2, 4, 8, 16, 32)
+fdir = grid.flowdir(inflated, dirmap=dirmap)
+acc  = grid.accumulation(fdir, dirmap=dirmap)
+
+# slope_rad.tif は別途 Whitebox / RichDEM / xrspatial 等で作成しておく
+with rasterio.open("slope_rad.tif") as src:
+    slope = src.read(1)
+    cellsize = src.res[0]
+
+# D8近似: pseudo-specific catchment area
+sca = (acc + 1.0) * cellsize
+twi = np.log(sca / np.maximum(np.tan(slope), 1e-6))
+```
+
+QGIS では、TWI は “QGIS native の単独ツール” というより、**Processing 経由で SAGA / GRASS / TauDEM / Whitebox を束ねる**使い方が中心になる。公式 training manual では、DEM から slope と catchment area を作り、その後に TWI を計算するモデルを作る流れが示されている。重要なのは、QGIS チュートリアルでも **slope は radians で計算しなければならない**と明記されている点だ。Model Designer はこの一連のワークフローを単一アルゴリズムとして再利用できる。
+
+QGIS の実用 GUI 手順は次のように整理できる。まず、DEM を読み込み、必要なら Warp/Reproject で投影をそろえる。次に、SAGA の Fill Sinks または GRASS `r.fill.dir`、あるいは Whitebox plugin の breach tool で前処理する。その後、SAGA / TauDEM / GRASS で flow accumulation を作成し、SAGA TWI / SWI を使うか、Raster Calculator で `ln(SCA / tan(slope))` を作る。最後に単一バンド擬似カラーでヒートマップ表示し、等高線や stream network を重ねる。QGIS native slope は degree なので、そのまま `tan()` に入れるなら radian へ変換する必要がある。
+
+ArcGIS Pro では、`Flow Direction` が D8 / MFD / DINF をサポートし、`Flow Accumulation` がそれに追随する。`Slope` は従来の 3×3 plane-fit だが、公式にはより新しい `Surface Parameters` の使用が推奨されている。TWI は専用ツールではなく、通常は `Fill` → `Flow Direction` → `Flow Accumulation` → `Slope` → `Raster Calculator` で作る。`Tan` は radians 入力、`Ln` は 0 以下を NoData にするので、式は slope units に注意して組む。
+
+### ArcGIS Pro の標準式例
+
+`Flow Accumulation` が cell count を返す場合、近似的には次のような式になる。
+
+```text
+Ln( (( "flow_acc" + 1 ) * cellsize ) / Tan("slope_rad") )
+```
+
+SAGA / GRASS の実装差も押さえておいた方がよい。GRASS `r.watershed` は **MFD がデフォルト**で、`-s` フラグで SFD（D8）になる。一方、SAGA は標準 TWI と SAGA Wetness Index が分かれており、parallelizable flow accumulation では D8 / D∞ / MFD と convergence を切り替えられる。QGIS から両者を呼ぶときは、見た目が同じ “wetness” でも中身が違うと理解して選ぶべきだ。
+
+## 検証・計算コスト・推奨ワークフロー
+
+TWI の検証で最も強いのは、**現地土壌水分・地下水位・植生データとの照合**である。Sørensen らは土壌水分、地下水位、土壌 pH、植物種数との相関で手法比較を行い、Kopecký らは土壌水分と植物種組成を使ってガイドラインを出した。Riihimäki らは大規模な現地観測で algorithm × resolution の感度を調べ、Winzeler らは長期の土壌体積含水率データで 546 通りの TWI を比較した。森林研究なら、これに加えて **site index、樹高、土壌型、沢からの距離、林床植生指標**を外部基準にできる。
+
+統計的には、単純相関だけで終わらせない方がよい。空間自己相関の強い森林プロットデータでは、通常の random CV だけだと過大評価になりやすいので、**空間ブロック化した cross-validation**、解像度・flow algorithm・平滑化・閾値を変えた感度分析、さらに地形指標群の共線性評価を併用するのが望ましい。これは文献に即した推奨的判断である。少なくとも、Kopecký、Riihimäki、Winzeler の3系統の結果から、アルゴリズム感度と解像度感度を検証しない TWI 解析は説得力が弱いといえる。
+
+計算コストは、前処理段階で急増することが多い。ArcGIS の Fill はメモリ・CPU・ディスク負荷が高く、入力 raster の最大 4 倍のディスクを要することがある。GRASS `r.watershed` は RAM mode と disk-swap mode を持ち、RAM mode では 100 万セルあたり最大 31 MB が目安とされる。SAGA には parallelizable flow accumulation があり、WhiteboxTools も多くのツールで並列実行を前提としている。xarray-spatial は Dask/CuPy backend によるスケーリングを前面に出している。
+
+大規模領域では、四つの戦略が現実的である。第一に、**COG/GeoTIFF + tile 処理**で前処理と傾斜計算を分割する。第二に、ArcGIS なら Parallel Processing Factor を設定し、必要なら Raster Analysis を image service ベースで回す。第三に、GRASS は region 設定と mask で対象範囲を絞り、必要なら `-m` で disk mode に落とす。第四に、Python なら `rioxarray` / `xarray-spatial` / Dask を併用し、クラウドストレージ上の COG を lazily 読む。
+
+可視化は単なる見栄えではなく、結果の妥当性確認にも使う。最低限、**TWI ヒートマップ、等高線・陰影起伏図との重ね合わせ、河道抽出結果との比較、TWI と現地土壌水分/樹高/地下水位の散布図**は作るべきだ。QGIS 教材でも単一バンド擬似カラーで TWI を可視化し、レイヤスタイルとして保存する流れが紹介されている。森林研究では、谷底だけ極端に飽和して尾根が不自然に切り立つ、あるいは道路・崖・DEM 継ぎ目が高 TWI 線になるなら、前処理や流向法に問題がある可能性が高い。
+
+推奨ワークフローを用途別にまとめると次のようになる。小規模・高精細の森林斜面なら、**LiDAR DTM → breach/fill 比較 → D∞ と FD8 を比較 → TWI → 現地湿度検証**。広域の森林管理・立地診断なら、**5–10 m DEM → SAGA/GRASS で batch 処理 → TWI と soil/site index を統合**。大規模研究や再現可能解析パイプラインなら、**Whitebox or GRASS/TauDEM backend + R/Python orchestration + Dask/並列 + 感度分析の自動化**が適している。ArcGIS を使うなら ModelBuilder、QGIS を使うなら Model Designer で標準化するのが実務上もっとも効率的だ。
+
+最後に、森林研究での **よくある誤り**を短く整理する。第一に、地理座標のまま TWI を計算すること。第二に、D8 の flow accumulation cell count を SCA と誤認すること。第三に、slope の degree/radian を取り違えること。第四に、凹地 fill を強くしすぎて森林湿地や林道轍など本物の微地形を消すこと。第五に、アルゴリズム比較なしで TWI を唯一の湿潤指標として解釈すること。これらは、ほぼすべて公式ドキュメントと比較研究が繰り返し示している落とし穴である。
+
+## 参考文献と公式ドキュメント
+
+### 主要論文
+
+| 文献 | 種別 | 入手先 |
+|---|---|---|
+| Beven, K. J., & Kirkby, M. J. 1979. *A physically based, variable contributing area model of basin hydrology*. | 原著 | DOI 10.1080/02626667909491834 |
+| Moore, I. D., Grayson, R. B., & Ladson, A. R. 1991. *Digital terrain modelling: a review of hydrological, geomorphological, and biological applications*. | レビュー | DOI 10.1002/hyp.3360050103 |
+| Sørensen, R., Zinko, U., & Seibert, J. 2006. *On the calculation of the topographic wetness index*. | 原著 | DOI 10.5194/hess-10-101-2006 |
+| Tarboton, D. G. 1997. *A New Method for the Determination of Flow Directions and Contributing Areas in Grid DEMs*. | 原著 | DOI 10.1029/96WR03137 |
+| Holmgren, P. 1994. *Multiple flow direction algorithms for runoff modelling in grid based elevation models*. | 原著 | DOI 10.1002/hyp.3360080405 |
+| Qin, C.-Z. et al. 2007. *An adaptive approach to selecting a flow-partition exponent for a multiple-flow-direction algorithm*. | 原著 | DOI 10.1080/13658810601073240 |
+| Seibert, J., & McGlynn, B. L. 2007. *A new triangular multiple flow direction algorithm for computing upslope areas*. | 原著 | DOI 10.1029/2006WR005128 |
+| Kopecký, M., & Čížková, Š. 2010. *Using topographic wetness index in vegetation ecology: does the algorithm matter?* | 原著 | DOI 10.1111/j.1654-109X.2010.01083.x |
+| Kopecký, M., Macek, M., & Wild, J. 2021. *Topographic Wetness Index calculation guidelines based on measured soil moisture and plant species composition*. | ガイドライン論文 | DOI 10.1016/j.scitotenv.2020.143785 |
+| Riihimäki, H. et al. 2021. *Topographic Wetness Index as a Proxy for Soil Moisture: The Importance of Flow-Routing Algorithm and Grid Resolution*. | 原著 | DOI 10.1029/2021WR029871 |
+| Winzeler, H. E. et al. 2022. *Topographic Wetness Index as a Proxy for Soil Moisture in a Hillslope Catena*. | 原著 | DOI 10.3390/land11112018 |
+| Rinderer, M. et al. 2014. *Topographic controls on shallow groundwater levels in a steep, prealpine catchment*. | 原著 | DOI 10.1002/2013WR015009 |
+| Iverson, L. R. et al. 1997. *A GIS-derived integrated moisture index to predict forest composition and productivity*. | 原著 | USDA PDF |
+| Mitsuda, Y. et al. 2007. *Predicting the site index of sugi plantations from GIS-derived environmental factors in Miyazaki Prefecture*. | 日本関連原著 | 抄録・DOIページ |
+| Zushi, K. 2006. *Spatial distribution of soil carbon and nitrogen storage and site productivity in Japanese cedar stands*. | 日本関連原著 | DOIページ |
+| 稲垣昌宏ら 2018. *DEMから算出した地形指数と土壌型との関係の全国地域間比較*. | 日本語 | J-STAGE |
+| 森林総研九州 2018. *デジタル地形情報を活用した土壌情報の推定に向けて*. | 日本語解説 | 森林総研PDF |
+
+### 主要ツールの公式ドキュメント
+
+| ツール | 重要ページ | 要点 |
+|---|---|---|
+| GRASS GIS | `r.topidx`, `r.fill.dir`, `r.watershed`, `r.topmodel` | 標準 TWI、sinkless DEM、MFD/SFD、巨大 rasters への対応 |
+| SAGA GIS | Topographic Wetness Index, SAGA Wetness Index, Flow Width and Specific Catchment Area, Flow Accumulation (Parallelizable) | 標準 TWI と SWI の区別、SCA の明示計算、並列処理 |
+| TauDEM | D-Infinity Flow Directions, D-Infinity Contributing Area, QGIS provider docs | D∞ 系の代表実装 |
+| WhiteboxTools | WetnessIndex, BreachDepressionsLeastCost, D8/FD8 flow accumulation, Python/R interface docs | 前処理から TWI まで一貫して自動化しやすい |
+| ArcGIS Pro | Flow Direction, Flow Accumulation, Slope, Fill, Raster Calculator, Parallel Processing | D8/MFD/DINF を GUI・ModelBuilder で運用可能 |
+| QGIS | Model Designer, hydrological analysis, TWI tutorial, raster terrain analysis | Processing による SAGA/GRASS/TauDEM の統合 |
+| R `terra` | `terrain()` docs | slope/flowdir の基礎計算と CRS 依存 |
+| R `RSAGA` | `rsaga.wetness.index()` docs | SWI の R 呼び出し |
+| R `whitebox` | `wbt_wetness_index()`, package docs | WhiteboxTools の R frontend |
+| R `topmodel` | archived CRAN page, `topmodel()`, `topidx()` docs | 理論学習向け、現行では保守に注意 |
+| Python `pysheds` | GitHub README / examples | D8 の前処理・流域解析が簡潔 |
+| Python `richdem` | Flow Accumulation, Terrain Attributes docs | 高速 terrain analysis と多流向比較 |
+| Python `rasterio` / `rioxarray` | georeferencing, I/O docs | DEM 入出力と CRS 管理 |
+| Python `xarray-spatial` | hydrology docs, package overview | D8/D∞/MFD と Dask/CuPy backend |
+
+### 最終的な推奨
+
+森林研究で TWI を使うなら、まず **「標準 TWI を一度計算して終わり」ではなく、「前処理・flow-routing・解像度の感度を確かめる比較設計」**にするのが最も重要だ。小規模・高解像度では Whitebox/TauDEM/SAGA をバックエンドにした D∞ または MFD 系、小〜中規模の再現可能解析では R なら `terra + whitebox`、Python なら `whitebox + rasterio`、GUI 運用なら QGIS Model Designer か ArcGIS ModelBuilder が最もバランスがよい。土壌水分や植生を説明したい場面では、D8 だけで結論を出さず、少なくとも MFD/D∞ と比較するのが安全である。
