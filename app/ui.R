@@ -108,7 +108,18 @@ ui <- shiny::fluidPage(
           shiny::h4("投影候補"),
           shiny::tableOutput("crs_candidates"),
           shiny::h4("JGD2011平面直角座標系 早見表"),
-          shiny::tableOutput("jgd2011_zones")
+          shiny::tableOutput("jgd2011_zones"),
+
+          shiny::tags$p(
+            shiny::tags$small(
+              "出典：",
+              shiny::tags$a(
+                href = "https://www.gsi.go.jp/LAW/heimencho.html",
+                target = "_blank",
+                rel = "noopener noreferrer"
+              )
+            )
+          )
         ),
         shiny::tabPanel(
           "結果",
