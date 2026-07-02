@@ -57,6 +57,18 @@ ui <- shiny::fluidPage(
         "残った凹地をfillする",
         value = TRUE
       ),
+      shiny::hr(),
+      shiny::checkboxInput(
+        "project_dem",
+        "TWI計算前に投影変換する",
+        value = FALSE
+      ),
+      shiny::textInput(
+        "target_epsg",
+        "変換先EPSG",
+        value = "",
+        placeholder = "例: 6677"
+      ),
       shiny::actionButton(
         "run",
         "TWIを計算",
@@ -94,6 +106,16 @@ ui <- shiny::fluidPage(
             shiny::uiOutput("dem_map_ui")
           ),
           shiny::tableOutput("dem_info")
+        ),
+        shiny::tabPanel(
+          "CRS確認",
+          shiny::br(),
+          shiny::h4("入力DEM"),
+          shiny::tableOutput("crs_info"),
+          shiny::h4("投影候補"),
+          shiny::tableOutput("crs_candidates"),
+          shiny::h4("JGD2011平面直角座標系 早見表"),
+          shiny::tableOutput("jgd2011_zones")
         ),
         shiny::tabPanel(
           "結果",

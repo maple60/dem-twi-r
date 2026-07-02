@@ -29,7 +29,7 @@ server <- function(input, output, session) {
 
   load_dem <- function(path, label) {
     dem <- terra::rast(path)
-    validate_dem(dem)
+    validate_dem(dem, require_projected = FALSE)
     dem_path(path)
     reset_results()
     append_status(paste("DEMを読み込みました:", label))
@@ -80,6 +80,21 @@ server <- function(input, output, session) {
     status_messages("DEMのアップロード待ちです。")
   }, ignoreInit = FALSE)
 
+  shiny::observeEvent(dem_path(), {
+    path <- dem_path()
+    if (is.null(path)) {
+      shiny::updateTextInput(session, "target_epsg", value = "")
+      return(invisible(NULL))
+    }
+
+    dem <- terra::rast(path)
+    shiny::updateTextInput(
+      session,
+      "target_epsg",
+      value = default_target_epsg(dem)
+    )
+  }, ignoreNULL = FALSE)
+
   shiny::observeEvent(input$dem_file, {
     if (!identical(input$dem_source, "upload")) {
       return(invisible(NULL))
@@ -127,6 +142,37 @@ server <- function(input, output, session) {
     spacing = "s"
   )
 
+  output$crs_info <- shiny::renderTable(
+    {
+      shiny::req(dem_path())
+      crs_detail_table(terra::rast(dem_path()))
+    },
+    striped = TRUE,
+    bordered = TRUE,
+    spacing = "s"
+  )
+
+  output$crs_candidates <- shiny::renderTable(
+    {
+      shiny::req(dem_path())
+      crs_recommendations(terra::rast(dem_path()))
+    },
+    striped = TRUE,
+    bordered = TRUE,
+    spacing = "s"
+  )
+
+  output$jgd2011_zones <- shiny::renderTable(
+    {
+      zones <- jgd2011_zone_table()
+      zones$epsg <- paste0("EPSG:", zones$epsg)
+      zones
+    },
+    striped = TRUE,
+    bordered = TRUE,
+    spacing = "s"
+  )
+
   shiny::observeEvent(input$run, {
     shiny::req(dem_path())
     algorithms <- input$algorithms
@@ -143,6 +189,9 @@ server <- function(input, output, session) {
       paste0("output_", format(Sys.time(), "%Y%m%d_%H%M%S"))
     )
     total_steps <- 2 + 2 * length(algorithms)
+    if (isTRUE(input$project_dem)) {
+      total_steps <- total_steps + 1
+    }
     step <- 0
 
     append_status("TWI計算を開始しました。")
@@ -161,6 +210,8 @@ server <- function(input, output, session) {
             output_dir = output_dir,
             breach_dist = input$breach_dist,
             breach_fill = input$breach_fill,
+            project_dem = isTRUE(input$project_dem),
+            target_epsg = input$target_epsg,
             progress = progress
           )
         })
