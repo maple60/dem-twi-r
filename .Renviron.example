@@ -3,4 +3,4 @@
 # Keep .Renviron out of git because it is machine-specific.
 
 # Store source DEMs and final results in a synced folder if useful.
-DEM_TWI_DATA_DIR="C:/Users/your-name/Dropbox/dem-twi/data"
+DEM_TWI_DATA_DIR="C:/Users/your-name/Dropbox/dem-twi"
