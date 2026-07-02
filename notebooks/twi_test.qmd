@@ -103,15 +103,20 @@ dem_breached <- rast(file.path(output_dir, "dem_breached.tif"))
 元のDEMと比較します。
 
 ```{r}
-# braching demと元のdemを比較する
-par(mar = c(2, 1, 2, 1))
-plot(dem, axes = FALSE, main = "DEM (Original)")
-plot(dem_breached, axes = FALSE, main = "DEM (Breached Depressions)")
-plot(
-  dem - dem_breached,
-  axes = FALSE,
-  main = "Difference (Original - Breached)"
-)
+# breached DEMと元のDEMを比較する
+local({
+  old_mar <- par("mar")
+  on.exit(par(mar = old_mar), add = TRUE)
+
+  par(mar = c(2, 1, 2, 1))
+  plot(dem, axes = FALSE, main = "DEM (Original)")
+  plot(dem_breached, axes = FALSE, main = "DEM (Breached Depressions)")
+  plot(
+    dem - dem_breached,
+    axes = FALSE,
+    main = "Difference (Original - Breached)"
+  )
+})
 ```
 
 ## Flow Accumulation
