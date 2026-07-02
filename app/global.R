@@ -11,6 +11,10 @@ required_packages <- c("terra", "whitebox", "leaflet")
 # analysis rasters are left unchanged; this limit is only for preview layers.
 leaflet_preview_max_cells <- 250000
 
+viridis_colors <- function(n = 256) {
+  grDevices::hcl.colors(n, palette = "Viridis")
+}
+
 # Values are WhiteboxTools method identifiers; names are displayed in the UI.
 algorithm_choices <- c(
   "D8" = "d8",
@@ -191,9 +195,7 @@ leaflet_dem_map <- function(r) {
   preview <- downsample_raster_for_leaflet(r)
   dem_range <- raster_value_range(preview)
   dem_palette <- leaflet::colorNumeric(
-    palette = grDevices::colorRampPalette(
-      c("#2c7bb6", "#abd9e9", "#ffffbf", "#fdae61", "#d7191c")
-    )(256),
+    palette = viridis_colors(),
     domain = dem_range,
     na.color = "transparent"
   )

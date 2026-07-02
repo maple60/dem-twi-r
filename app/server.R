@@ -105,7 +105,7 @@ server <- function(input, output, session) {
   output$dem_plot <- shiny::renderPlot({
     shiny::req(dem_path())
     dem <- terra::rast(dem_path())
-    terra::plot(dem, axes = FALSE, main = "DEM")
+    terra::plot(dem, col = viridis_colors(), axes = FALSE, main = "DEM")
   })
 
   output$dem_map_ui <- shiny::renderUI({
@@ -241,7 +241,12 @@ server <- function(input, output, session) {
   output$twi_plot <- shiny::renderPlot({
     result <- selected_result()
     twi <- terra::rast(result$twi)
-    terra::plot(twi, axes = FALSE, main = paste("TWI", result$algorithm))
+    terra::plot(
+      twi,
+      col = viridis_colors(),
+      axes = FALSE,
+      main = paste("TWI", result$algorithm)
+    )
   })
 
   output$twi_map_ui <- shiny::renderUI({
@@ -255,7 +260,7 @@ server <- function(input, output, session) {
     leaflet_raster_map(
       twi,
       title = paste("TWI", result$algorithm),
-      colors = c("#ffffcc", "#c2e699", "#78c679", "#31a354", "#006837")
+      colors = viridis_colors()
     )
   })
 
