@@ -1,6 +1,8 @@
 ---
-title: "DEMダウンロード"
+title: "DEMデータの準備"
 ---
+
+## ダウンロード
 
 国土地理院の基盤地図情報ダウンロードサービスから、DEM（数値標高モデル）を取得します。
 
@@ -10,5 +12,21 @@ title: "DEMダウンロード"
 
 1次メッシュごとに選択なので、以下のサイトなどを参考にしながら、必要な範囲の2次メッシュを特定すると、ダウンロードデータを最小限にできます。
 
-- [電子地形図（2次メッシュ定型版）刊行範囲 | 国土地理院](https://www.gsi.go.jp/kibanjoho/kibanjoho50014.html
-)
+- [電子地形図（2次メッシュ定型版）刊行範囲 | 国土地理院](https://www.gsi.go.jp/kibanjoho/kibanjoho50014.html)
+
+## tif形式への変換
+
+[基盤地図情報ダウンロードサービス](https://service.gsi.go.jp/kiban/)のデータはzipファイルで提供されており、展開すると、xmlファイルが含まれています。
+
+扱いやすくするために、geotiff形式（.tif）に変換します。
+もっとも簡単な方法は、QGISの[QuickDEM4JP](https://plugins.qgis.org/plugins/QuickDEM4JP/)プラグインを使うことです。
+
+これにより、簡単にtif形式のDEMを作成できます。
+
+## トリミング
+
+そのままだと大きすぎる場合は、[**whitebox**](https://whiteboxr.gishub.org/index.html)の`clip_raster`関数を使って、必要な範囲にトリミングします。
+
+もしGUIで操作したい場合は、[WhiteboxTools GUI](https://jblindsay.github.io/ghrg/whiteboxgui/)を使うと便利です。
+
+また、QGISでトリミング

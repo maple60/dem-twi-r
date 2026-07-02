@@ -136,7 +136,7 @@ plot(dem_breached_d8_accum, axes = FALSE, main = "Flow Accumulation (D8)")
 ```
 
 これはD8アルゴリズムを使用して流域の蓄積量を計算します。
-`out_type = "specific contributing area"`は、特定の流域面積を出力することを意味します。
+`out_type = "specific contributing area"`は、比集水面積（単位幅あたりの寄与集水面積）を出力することを意味します。
 
 ## Slope
 
