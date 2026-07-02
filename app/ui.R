@@ -8,13 +8,6 @@ ui <- shiny::fluidPage(
       .container-fluid { max-width: 1320px; }
       .well { background: #ffffff; border-radius: 6px; }
       .plot-box { min-height: 360px; }
-      .map-placeholder {
-        min-height: 420px;
-        padding: 1rem;
-        background: #ffffff;
-        border: 1px solid #dddddd;
-        border-radius: 6px;
-      }
       pre { white-space: pre-wrap; }
     "
     ))

@@ -1,12 +1,11 @@
 library(shiny)
+library(leaflet)
 
 # Allow users to upload DEM files up to 1 GB.
 options(shiny.maxRequestSize = 1024 * 1024^2)
 
-# Packages used by the TWI workflow. They are loaded lazily through
-# namespace-qualified calls so startup stays simple and error messages can
-# point to missing dependencies.
-required_packages <- c("terra", "whitebox")
+# Packages used by the TWI workflow and interactive map previews.
+required_packages <- c("terra", "whitebox", "leaflet")
 
 # Keep interactive map rasters small enough for quick browser rendering. The
 # analysis rasters are left unchanged; this limit is only for preview layers.
@@ -39,10 +38,6 @@ check_packages <- function(packages) {
       call. = FALSE
     )
   }
-}
-
-leaflet_available <- function() {
-  requireNamespace("leaflet", quietly = TRUE)
 }
 
 downsample_raster_for_leaflet <- function(
@@ -95,6 +90,51 @@ raster_lonlat_bounds <- function(r) {
   )
 }
 
+add_reset_view_control <- function(map, bounds) {
+  js <- sprintf(
+    paste(
+      "function(el, x) {",
+      "  var map = this;",
+      "  var bounds = [[%.15f, %.15f], [%.15f, %.15f]];",
+      "  var ResetControl = L.Control.extend({",
+      "    options: { position: 'topleft' },",
+      "    onAdd: function(map) {",
+      "      var container = L.DomUtil.create('div', 'leaflet-bar leaflet-control');",
+      "      var button = L.DomUtil.create('button', '', container);",
+      "      button.type = 'button';",
+      "      button.innerHTML = '移動リセット';",
+      "      button.title = '表示位置とズームをリセット';",
+      "      button.setAttribute('aria-label', button.title);",
+      "      button.style.backgroundColor = '#ffffff';",
+      "      button.style.border = '0';",
+      "      button.style.cursor = 'pointer';",
+      "      button.style.height = '30px';",
+      "      button.style.lineHeight = '30px';",
+      "      button.style.padding = '0 8px';",
+      "      button.style.fontSize = '12px';",
+      "      button.style.whiteSpace = 'nowrap';",
+      "      L.DomEvent.disableClickPropagation(container);",
+      "      L.DomEvent.disableScrollPropagation(container);",
+      "      L.DomEvent.on(button, 'click', function(event) {",
+      "        L.DomEvent.preventDefault(event);",
+      "        map.fitBounds(bounds, { animate: true });",
+      "      });",
+      "      return container;",
+      "    }",
+      "  });",
+      "  map.addControl(new ResetControl());",
+      "}",
+      sep = "\n"
+    ),
+    bounds[["ymin"]],
+    bounds[["xmin"]],
+    bounds[["ymax"]],
+    bounds[["xmax"]]
+  )
+
+  htmlwidgets::onRender(map, js)
+}
+
 leaflet_raster_map <- function(r, title, colors) {
   check_packages(c("terra", "leaflet"))
 
@@ -133,6 +173,96 @@ leaflet_raster_map <- function(r, title, colors) {
       lng2 = bounds[["xmax"]],
       lat2 = bounds[["ymax"]]
     )
+    map <- add_reset_view_control(map, bounds)
+  }
+
+  map
+}
+
+hillshade_raster <- function(r) {
+  slope <- terra::terrain(r, v = "slope", unit = "radians")
+  aspect <- terra::terrain(r, v = "aspect", unit = "radians")
+  terra::shade(slope, aspect, angle = 40, direction = 315)
+}
+
+leaflet_dem_map <- function(r) {
+  check_packages(c("terra", "leaflet"))
+
+  preview <- downsample_raster_for_leaflet(r)
+  dem_range <- raster_value_range(preview)
+  dem_palette <- leaflet::colorNumeric(
+    palette = grDevices::colorRampPalette(
+      c("#2c7bb6", "#abd9e9", "#ffffbf", "#fdae61", "#d7191c")
+    )(256),
+    domain = dem_range,
+    na.color = "transparent"
+  )
+
+  map <- leaflet::leaflet(options = leaflet::leafletOptions(preferCanvas = TRUE))
+  map <- leaflet::addTiles(map, group = "OSM")
+  map <- leaflet::addProviderTiles(
+    map,
+    provider = leaflet::providers$Esri.WorldImagery,
+    group = "航空写真"
+  )
+
+  hillshade <- tryCatch(hillshade_raster(preview), error = function(e) NULL)
+  overlay_groups <- "DEM"
+  if (!is.null(hillshade)) {
+    hillshade_palette <- leaflet::colorNumeric(
+      palette = grDevices::gray.colors(256, start = 0.1, end = 1),
+      domain = raster_value_range(hillshade),
+      na.color = "transparent"
+    )
+    map <- leaflet::addRasterImage(
+      map,
+      hillshade,
+      colors = hillshade_palette,
+      opacity = 0.75,
+      project = TRUE,
+      maxBytes = 8 * 1024 * 1024,
+      group = "陰影起伏"
+    )
+    overlay_groups <- c("陰影起伏", overlay_groups)
+  }
+
+  map <- leaflet::addRasterImage(
+    map,
+    preview,
+    colors = dem_palette,
+    opacity = 0.70,
+    project = TRUE,
+    maxBytes = 8 * 1024 * 1024,
+    group = "DEM"
+  )
+  map <- leaflet::addLegend(
+    map,
+    position = "bottomright",
+    pal = dem_palette,
+    values = dem_range,
+    title = "DEM"
+  )
+  map <- leaflet::addLayersControl(
+    map,
+    baseGroups = c("OSM", "航空写真"),
+    overlayGroups = overlay_groups,
+    options = leaflet::layersControlOptions(collapsed = FALSE)
+  )
+  map <- leaflet::hideGroup(map, "航空写真")
+  if (!is.null(hillshade)) {
+    map <- leaflet::hideGroup(map, "陰影起伏")
+  }
+
+  bounds <- tryCatch(raster_lonlat_bounds(preview), error = function(e) NULL)
+  if (!is.null(bounds) && all(is.finite(bounds))) {
+    map <- leaflet::fitBounds(
+      map,
+      lng1 = bounds[["xmin"]],
+      lat1 = bounds[["ymin"]],
+      lng2 = bounds[["xmax"]],
+      lat2 = bounds[["ymax"]]
+    )
+    map <- add_reset_view_control(map, bounds)
   }
 
   map
