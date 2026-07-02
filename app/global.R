@@ -8,6 +8,10 @@ options(shiny.maxRequestSize = 1024 * 1024^2)
 # point to missing dependencies.
 required_packages <- c("terra", "whitebox")
 
+# Keep interactive map rasters small enough for quick browser rendering. The
+# analysis rasters are left unchanged; this limit is only for preview layers.
+leaflet_preview_max_cells <- 250000
+
 # Values are WhiteboxTools method identifiers; names are displayed in the UI.
 algorithm_choices <- c(
   "D8" = "d8",
@@ -35,6 +39,103 @@ check_packages <- function(packages) {
       call. = FALSE
     )
   }
+}
+
+leaflet_available <- function() {
+  requireNamespace("leaflet", quietly = TRUE)
+}
+
+downsample_raster_for_leaflet <- function(
+  r,
+  max_cells = leaflet_preview_max_cells
+) {
+  cell_count <- terra::ncell(r)
+  if (cell_count <= max_cells) {
+    return(r)
+  }
+
+  aggregate_factor <- ceiling(sqrt(cell_count / max_cells))
+  terra::aggregate(r, fact = aggregate_factor, fun = mean, na.rm = TRUE)
+}
+
+raster_value_range <- function(r) {
+  value_range <- tryCatch(
+    as.numeric(terra::global(r, range, na.rm = TRUE)[1, ]),
+    error = function(e) c(NA_real_, NA_real_)
+  )
+
+  if (length(value_range) != 2 || any(!is.finite(value_range))) {
+    return(c(0, 1))
+  }
+
+  if (isTRUE(all.equal(value_range[1], value_range[2]))) {
+    return(value_range + c(-0.5, 0.5))
+  }
+
+  value_range
+}
+
+raster_lonlat_bounds <- function(r) {
+  ext <- terra::ext(r)
+  corners <- data.frame(
+    x = c(ext[1], ext[2], ext[2], ext[1]),
+    y = c(ext[3], ext[3], ext[4], ext[4])
+  )
+  points <- terra::vect(corners, geom = c("x", "y"), crs = terra::crs(r))
+  if (!isTRUE(terra::is.lonlat(r))) {
+    points <- terra::project(points, "EPSG:4326")
+  }
+
+  coords <- terra::crds(points)
+  c(
+    xmin = min(coords[, 1], na.rm = TRUE),
+    ymin = min(coords[, 2], na.rm = TRUE),
+    xmax = max(coords[, 1], na.rm = TRUE),
+    ymax = max(coords[, 2], na.rm = TRUE)
+  )
+}
+
+leaflet_raster_map <- function(r, title, colors) {
+  check_packages(c("terra", "leaflet"))
+
+  preview <- downsample_raster_for_leaflet(r)
+  value_range <- raster_value_range(preview)
+  palette <- leaflet::colorNumeric(
+    palette = grDevices::colorRampPalette(colors)(256),
+    domain = value_range,
+    na.color = "transparent"
+  )
+
+  map <- leaflet::leaflet(options = leaflet::leafletOptions(preferCanvas = TRUE))
+  map <- leaflet::addTiles(map)
+  map <- leaflet::addRasterImage(
+    map,
+    preview,
+    colors = palette,
+    opacity = 0.85,
+    project = TRUE,
+    maxBytes = 8 * 1024 * 1024
+  )
+  map <- leaflet::addLegend(
+    map,
+    position = "bottomright",
+    pal = palette,
+    values = value_range,
+    title = title
+  )
+
+  bounds <- tryCatch(raster_lonlat_bounds(preview), error = function(e) NULL)
+  if (!is.null(bounds) && all(is.finite(bounds))) {
+    map <- leaflet::fitBounds(
+      map,
+      lng1 = bounds[["xmin"]],
+      lat1 = bounds[["ymin"]],
+      lng2 = bounds[["xmax"]],
+      lat2 = bounds[["ymax"]]
+    )
+  }
+
+  map
 }
 
 copy_uploaded_dem <- function(upload, work_dir) {

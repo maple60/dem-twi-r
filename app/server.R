@@ -93,6 +93,30 @@ server <- function(input, output, session) {
     terra::plot(dem, axes = FALSE, main = "DEM")
   })
 
+  output$dem_map_ui <- shiny::renderUI({
+    shiny::req(dem_path())
+    if (!leaflet_available()) {
+      return(shiny::div(
+        class = "map-placeholder",
+        "インタラクティブ地図を使うには leaflet パッケージが必要です。"
+      ))
+    }
+
+    leaflet::leafletOutput("dem_map", height = 420)
+  })
+
+  if (leaflet_available()) {
+    output$dem_map <- leaflet::renderLeaflet({
+      shiny::req(dem_path())
+      dem <- terra::rast(dem_path())
+      leaflet_raster_map(
+        dem,
+        title = "DEM",
+        colors = c("#2c7bb6", "#abd9e9", "#ffffbf", "#fdae61", "#d7191c")
+      )
+    })
+  }
+
   output$dem_info <- shiny::renderTable(
     {
       shiny::req(dem_path())
@@ -181,6 +205,30 @@ server <- function(input, output, session) {
     twi <- terra::rast(result$twi)
     terra::plot(twi, axes = FALSE, main = paste("TWI", result$algorithm))
   })
+
+  output$twi_map_ui <- shiny::renderUI({
+    selected_result()
+    if (!leaflet_available()) {
+      return(shiny::div(
+        class = "map-placeholder",
+        "インタラクティブ地図を使うには leaflet パッケージが必要です。"
+      ))
+    }
+
+    leaflet::leafletOutput("twi_map", height = 420)
+  })
+
+  if (leaflet_available()) {
+    output$twi_map <- leaflet::renderLeaflet({
+      result <- selected_result()
+      twi <- terra::rast(result$twi)
+      leaflet_raster_map(
+        twi,
+        title = paste("TWI", result$algorithm),
+        colors = c("#ffffcc", "#c2e699", "#78c679", "#31a354", "#006837")
+      )
+    })
+  }
 
   output$output_files <- shiny::renderTable(
     {

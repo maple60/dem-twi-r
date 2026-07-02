@@ -8,6 +8,13 @@ ui <- shiny::fluidPage(
       .container-fluid { max-width: 1320px; }
       .well { background: #ffffff; border-radius: 6px; }
       .plot-box { min-height: 360px; }
+      .map-placeholder {
+        min-height: 420px;
+        padding: 1rem;
+        background: #ffffff;
+        border: 1px solid #dddddd;
+        border-radius: 6px;
+      }
       pre { white-space: pre-wrap; }
     "
     ))
@@ -68,13 +75,47 @@ ui <- shiny::fluidPage(
         shiny::tabPanel(
           "DEMプレビュー",
           shiny::br(),
-          shiny::plotOutput("dem_plot", height = 420),
+          shiny::radioButtons(
+            "dem_view_mode",
+            "表示",
+            choices = c(
+              "静的プロット" = "plot",
+              "インタラクティブ地図" = "map"
+            ),
+            selected = "plot",
+            inline = TRUE
+          ),
+          shiny::conditionalPanel(
+            "input.dem_view_mode == 'plot'",
+            shiny::plotOutput("dem_plot", height = 420)
+          ),
+          shiny::conditionalPanel(
+            "input.dem_view_mode == 'map'",
+            shiny::uiOutput("dem_map_ui")
+          ),
           shiny::tableOutput("dem_info")
         ),
         shiny::tabPanel(
           "結果",
           shiny::br(),
-          shiny::plotOutput("twi_plot", height = 420),
+          shiny::radioButtons(
+            "twi_view_mode",
+            "表示",
+            choices = c(
+              "静的プロット" = "plot",
+              "インタラクティブ地図" = "map"
+            ),
+            selected = "plot",
+            inline = TRUE
+          ),
+          shiny::conditionalPanel(
+            "input.twi_view_mode == 'plot'",
+            shiny::plotOutput("twi_plot", height = 420)
+          ),
+          shiny::conditionalPanel(
+            "input.twi_view_mode == 'map'",
+            shiny::uiOutput("twi_map_ui")
+          ),
           shiny::tableOutput("output_files")
         ),
         shiny::tabPanel(
