@@ -15,10 +15,22 @@ ui <- shiny::fluidPage(
   shiny::titlePanel("TWI計算"),
   shiny::sidebarLayout(
     shiny::sidebarPanel(
-      shiny::fileInput(
-        "dem_file",
-        "DEM GeoTIFF",
-        accept = c(".tif", ".tiff")
+      shiny::radioButtons(
+        "dem_source",
+        "DEM入力",
+        choices = c(
+          "GeoTIFFをアップロード" = "upload",
+          "サンプルDEMを使用" = "sample"
+        ),
+        selected = "upload"
+      ),
+      shiny::conditionalPanel(
+        "input.dem_source == 'upload'",
+        shiny::fileInput(
+          "dem_file",
+          "DEM GeoTIFF",
+          accept = c(".tif", ".tiff")
+        )
       ),
       shiny::checkboxGroupInput(
         "algorithms",

@@ -51,6 +51,27 @@ copy_uploaded_dem <- function(upload, work_dir) {
   target
 }
 
+copy_sample_dem <- function(work_dir) {
+  check_packages(c("terra", "whitebox"))
+
+  source_path <- whitebox::sample_dem_data()
+  if (!file.exists(source_path)) {
+    stop("Whitebox sample DEM was not found.", call. = FALSE)
+  }
+
+  ext <- tolower(tools::file_ext(source_path))
+  if (!nzchar(ext)) {
+    ext <- "tif"
+  }
+
+  target <- file.path(work_dir, paste0("sample_dem.", ext))
+  ok <- file.copy(source_path, target, overwrite = TRUE)
+  if (!ok) {
+    stop("Failed to copy sample DEM.", call. = FALSE)
+  }
+  target
+}
+
 dem_metadata <- function(dem) {
   ext <- terra::ext(dem)
   res <- terra::res(dem)

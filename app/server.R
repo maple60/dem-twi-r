@@ -11,6 +11,15 @@ server <- function(input, output, session) {
   run_results <- shiny::reactiveVal(NULL)
   status_messages <- shiny::reactiveVal("DEMのアップロード待ちです。")
 
+  reset_results <- function() {
+    run_results(NULL)
+    shiny::updateSelectInput(
+      session,
+      "result_algorithm",
+      choices = character(0)
+    )
+  }
+
   append_status <- function(message) {
     status_messages(c(
       status_messages(),
@@ -18,29 +27,64 @@ server <- function(input, output, session) {
     ))
   }
 
-  shiny::observeEvent(input$dem_file, {
+  load_dem <- function(path, label) {
+    dem <- terra::rast(path)
+    validate_dem(dem)
+    dem_path(path)
+    reset_results()
+    append_status(paste("DEMを読み込みました:", label))
+  }
+
+  load_uploaded_dem <- function() {
     tryCatch(
       {
         check_packages("terra")
         path <- copy_uploaded_dem(input$dem_file, work_dir)
-        dem <- terra::rast(path)
-        validate_dem(dem)
-        dem_path(path)
-        run_results(NULL)
-        shiny::updateSelectInput(
-          session,
-          "result_algorithm",
-          choices = character(0)
-        )
-        append_status(paste("DEMを読み込みました:", input$dem_file$name))
+        load_dem(path, input$dem_file$name)
       },
       error = function(e) {
         dem_path(NULL)
-        run_results(NULL)
+        reset_results()
         append_status(paste("DEM読み込みに失敗しました:", conditionMessage(e)))
         shiny::showNotification(conditionMessage(e), type = "error")
       }
     )
+  }
+
+  shiny::observeEvent(input$dem_source, {
+    if (identical(input$dem_source, "sample")) {
+      tryCatch(
+        {
+          path <- copy_sample_dem(work_dir)
+          load_dem(path, "WhiteboxサンプルDEM")
+        },
+        error = function(e) {
+          dem_path(NULL)
+          reset_results()
+          append_status(
+            paste("サンプルDEM読み込みに失敗しました:", conditionMessage(e))
+          )
+          shiny::showNotification(conditionMessage(e), type = "error")
+        }
+      )
+      return(invisible(NULL))
+    }
+
+    if (!is.null(input$dem_file)) {
+      load_uploaded_dem()
+      return(invisible(NULL))
+    }
+
+    dem_path(NULL)
+    reset_results()
+    status_messages("DEMのアップロード待ちです。")
+  }, ignoreInit = FALSE)
+
+  shiny::observeEvent(input$dem_file, {
+    if (!identical(input$dem_source, "upload")) {
+      return(invisible(NULL))
+    }
+    load_uploaded_dem()
   })
 
   output$dem_plot <- shiny::renderPlot({
