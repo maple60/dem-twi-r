@@ -63,6 +63,15 @@ whitebox::wbt_version()
 # 入力
 dem_file_path <- file.path(DEM_TWI_DATA_DIR, "data", dem_file_name)
 dem <- rast(dem_file_path)
+
+# TWI計算では距離・面積を扱うため、投影座標系のDEMを使う
+if (!nzchar(crs(dem))) {
+  stop("DEM has no coordinate reference system.", call. = FALSE)
+}
+if (isTRUE(is.lonlat(dem))) {
+  stop("DEM must use a projected coordinate reference system.", call. = FALSE)
+}
+
 print(dem)
 
 # 可視化
