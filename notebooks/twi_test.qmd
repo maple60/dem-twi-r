@@ -31,6 +31,8 @@ library(terra)
 library(whitebox)
 
 DEM_TWI_DATA_DIR <- Sys.getenv("DEM_TWI_DATA_DIR")
+dem_file_name <- "dem_sample_03.tif"
+
 # DEM_TWI_DATA_DIR が設定されていない場合はエラーを出す
 if (!nzchar(DEM_TWI_DATA_DIR)) {
   stop("DEM_TWI_DATA_DIR is not set.", call. = FALSE)
@@ -59,7 +61,7 @@ whitebox::wbt_version()
 
 ```{r}
 # 入力
-dem_file_path <- file.path(DEM_TWI_DATA_DIR, "data", "dem_sample_03.tif")
+dem_file_path <- file.path(DEM_TWI_DATA_DIR, "data", dem_file_name)
 dem <- rast(dem_file_path)
 print(dem)
 
