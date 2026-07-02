@@ -1,0 +1,153 @@
+
+---
+title: "TWI (Topographic Wetness Index) の計算"
+---
+
+## 概要
+
+[**whitebox**](https://whiteboxr.gishub.org/index.html)というRパッケージを使って、DEM（デジタル標高モデル）からTWI（Topographic Wetness Index）を計算する方法を示します。
+
+## 解析の流れ
+
+```{mermaid}
+graph TD
+    A[DEMの読み込み] --> B[Depression breaching]
+    B --> C[Flow Accumulationの計算]
+    C --> D[傾斜の計算]
+    D --> E[TWIの計算]
+```
+
+## セットアップ
+
+```{r whitebox-install, eval=FALSE}
+# 初回だけ必要に応じて実行する
+# renv::install("terra")
+# renv::install("whitebox")
+whitebox::install_whitebox()
+```
+
+```{r}
+library(terra)
+library(whitebox)
+
+DEM_TWI_DATA_DIR <- Sys.getenv("DEM_TWI_DATA_DIR")
+# DEM_TWI_DATA_DIR が設定されていない場合はエラーを出す
+if (!nzchar(DEM_TWI_DATA_DIR)) {
+  stop("DEM_TWI_DATA_DIR is not set.", call. = FALSE)
+}
+output_dir <- file.path(DEM_TWI_DATA_DIR, "output")
+dir.create(output_dir, showWarnings = FALSE, recursive = TRUE)
+
+# WhiteboxTools の実行可能ファイルのパスを取得し、存在を確認
+wbt_path <- wbt_exe_path(shell_quote = FALSE)
+if (!whitebox::check_whitebox_binary()) {
+  stop(
+    "WhiteboxTools executable was not found: ",
+    wbt_path,
+    "\n",
+    "Run whitebox::install_whitebox() once, then rerun this notebook.",
+    call. = FALSE
+  )
+}
+
+# WhiteboxToolsのパスとバージョンを確認
+wbt_path
+whitebox::wbt_version()
+```
+
+## DEMの読み込みと可視化
+
+```{r}
+# 入力
+dem_file_path <- file.path(DEM_TWI_DATA_DIR, "data", "dem_sample_03.tif")
+dem <- rast(dem_file_path)
+print(dem)
+
+# 可視化
+plot(dem, axes = FALSE, main = "DEM (Original)")
+```
+
+
+::: {.callout-important}
+
+## 座標系
+
+座標系は必ず投影座標系（Projected Coordinate System）である必要があります。
+地理座標系（Geographic Coordinate System）では、距離や面積の計算が正確に行えないため、TWIの計算結果が不正確になる可能性があります。
+:::
+
+
+## Depression breaching
+
+```{r}
+wbt_breach_depressions_least_cost(
+  dem = dem_file_path,
+  output = file.path(output_dir, "dem_breached.tif"),
+  dist = 20,
+  fill = TRUE
+)
+dem_breached <- rast(file.path(output_dir, "dem_breached.tif"))
+```
+
+元のDEMと比較します。
+
+```{r}
+# braching demと元のdemを比較する
+par(mar = c(2, 1, 2, 1))
+plot(dem, axes = FALSE, main = "DEM (Original)")
+plot(dem_breached, axes = FALSE, main = "DEM (Breached Depressions)")
+plot(
+  dem - dem_breached,
+  axes = FALSE,
+  main = "Difference (Original - Breached)"
+)
+```
+
+## Flow Accumulation
+
+```{r}
+wbt_d8_flow_accumulation(
+  input = file.path(output_dir, "dem_breached.tif"),
+  output = file.path(output_dir, "dem_breached_d8_accum.tif"),
+  out_type = "specific contributing area",
+  log = FALSE
+)
+dem_breached_d8_accum <- rast(file.path(
+  output_dir,
+  "dem_breached_d8_accum.tif"
+))
+plot(dem_breached_d8_accum, axes = FALSE, main = "Flow Accumulation (D8)")
+```
+
+これはD8アルゴリズムを使用して流域の蓄積量を計算します。
+`out_type = "specific contributing area"`は、特定の流域面積を出力することを意味します。
+
+## Slope
+
+```{r}
+wbt_slope(
+  dem = file.path(output_dir, "dem_breached.tif"),
+  output = file.path(output_dir, "dem_breached_slope.tif"),
+  units = "degrees"
+)
+dem_breached_slope <- rast(file.path(
+  output_dir,
+  "dem_breached_slope.tif"
+))
+plot(dem_breached_slope, axes = FALSE, main = "Slope (degrees)")
+```
+
+## TWI (Topographic Wetness Index)
+
+TWIを計算するには、`wbt_wetness_index()`関数を使用します。この関数は、流域の蓄積量と傾斜を入力として受け取り、TWIを計算します。
+
+```{r}
+wbt_wetness_index(
+  sca = file.path(output_dir, "dem_breached_d8_accum.tif"),
+  slope = file.path(output_dir, "dem_breached_slope.tif"),
+  output = file.path(output_dir, "dem_breached_twi.tif")
+)
+twi <- rast(file.path(output_dir, "dem_breached_twi.tif"))
+
+plot(twi, axes = FALSE, main = "TWI (Topographic Wetness Index)")
+```
