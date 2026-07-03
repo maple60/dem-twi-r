@@ -102,6 +102,76 @@ raster_paths_value_range <- function(paths) {
   normalize_value_range(c(min(mins), max(maxs)))
 }
 
+raster_statistics <- function(path) {
+  r <- terra::rast(path)
+
+  value_range <- tryCatch(
+    as.numeric(terra::global(r, range, na.rm = TRUE)[1, ]),
+    error = function(e) c(NA_real_, NA_real_)
+  )
+  value_range[!is.finite(value_range)] <- NA_real_
+
+  quantiles <- tryCatch(
+    as.numeric(
+      terra::global(
+        r,
+        quantile,
+        probs = c(0.25, 0.5, 0.75),
+        na.rm = TRUE
+      )[1, ]
+    ),
+    error = function(e) rep(NA_real_, 3)
+  )
+  quantiles[!is.finite(quantiles)] <- NA_real_
+
+  na_cells <- tryCatch(
+    as.numeric(terra::global(is.na(r), sum, na.rm = TRUE)[1, 1]),
+    error = function(e) NA_real_
+  )
+  total_cells <- terra::ncell(r)
+  na_percent <- if (is.finite(na_cells) && total_cells > 0) {
+    100 * na_cells / total_cells
+  } else {
+    NA_real_
+  }
+
+  c(
+    min = value_range[1],
+    q25 = quantiles[1],
+    median = quantiles[2],
+    q75 = quantiles[3],
+    max = value_range[2],
+    NA_cells = na_cells,
+    NA_percent = na_percent
+  )
+}
+
+twi_statistics_table <- function(results) {
+  if (length(results) == 0) {
+    return(data.frame())
+  }
+
+  rows <- lapply(results, function(item) {
+    stats <- raster_statistics(item$twi)
+    data.frame(
+      algorithm = item$algorithm,
+      min = signif(stats[["min"]], 6),
+      q25 = signif(stats[["q25"]], 6),
+      median = signif(stats[["median"]], 6),
+      q75 = signif(stats[["q75"]], 6),
+      max = signif(stats[["max"]], 6),
+      NA_cells = stats[["NA_cells"]],
+      NA_percent = signif(stats[["NA_percent"]], 4),
+      stringsAsFactors = FALSE,
+      check.names = FALSE
+    )
+  })
+
+  table <- do.call(rbind, rows)
+  rownames(table) <- NULL
+  table
+}
+
 raster_lonlat_bounds <- function(r) {
   ext <- terra::ext(r)
   corners <- data.frame(
@@ -746,6 +816,7 @@ run_twi_workflow <- function(
     twi_range = raster_paths_value_range(
       vapply(results, function(item) item$twi, character(1))
     ),
+    twi_stats = twi_statistics_table(results),
     algorithms = results,
     output_dir = output_dir,
     finished_at = Sys.time()

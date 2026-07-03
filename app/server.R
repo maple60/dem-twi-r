@@ -281,6 +281,22 @@ server <- function(input, output, session) {
     )
   })
 
+  output$twi_stats <- shiny::renderTable(
+    {
+      result <- run_results()
+      shiny::req(result)
+
+      if (!is.null(result$twi_stats)) {
+        return(result$twi_stats)
+      }
+
+      twi_statistics_table(result$algorithms)
+    },
+    striped = TRUE,
+    bordered = TRUE,
+    spacing = "s"
+  )
+
   output$output_files <- shiny::renderTable(
     {
       result <- run_results()

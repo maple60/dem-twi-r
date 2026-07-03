@@ -142,6 +142,9 @@ ui <- shiny::fluidPage(
             "input.twi_view_mode == 'map'",
             shiny::uiOutput("twi_map_ui")
           ),
+          shiny::h4("TWI統計"),
+          shiny::tableOutput("twi_stats"),
+          shiny::h4("出力ファイル"),
           shiny::tableOutput("output_files")
         ),
         shiny::tabPanel(
