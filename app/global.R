@@ -151,7 +151,10 @@ leaflet_raster_map <- function(r, title, colors) {
   )
 
   map <- leaflet::leaflet(options = leaflet::leafletOptions(preferCanvas = TRUE))
-  map <- leaflet::addTiles(map)
+  map <- leaflet::addProviderTiles(
+    map,
+    provider = leaflet::providers$CartoDB.Positron
+  )
   map <- leaflet::addRasterImage(
     map,
     preview,
