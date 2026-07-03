@@ -42,3 +42,7 @@ quarto preview
 - `app/`: Shinylive で公開する概念デモ
 - `app-shinylive/`: Shinylive 変換前のアプリソース
 - `scripts/`: Shinylive 関連の補助スクリプト
+
+## ライセンス
+
+このリポジトリは MIT License の下で公開しています。詳細は [LICENSE](LICENSE) を参照してください。
