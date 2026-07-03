@@ -5,3 +5,4 @@
 /_quarto_check/
 
 **/*.quarto_ipynb
+output/
