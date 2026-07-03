@@ -8,10 +8,8 @@ website:
   title: "DEMからTWI/TPIを計算する"
   repo-url: https://github.com/maple60/dem-twi-r
   repo-actions: [edit, source, issue]
+
   navbar:
-    tools: 
-      - icon: github
-        href: https://github.com/maple60/dem-twi-r
     search: true
     left:
       - href: index.qmd
@@ -28,6 +26,11 @@ website:
         text: Shinylive App
       - href: https://maple60-dem-terrain-indices-app.share.connect.posit.cloud/
         text: TWI/TPI計算アプリ
+      
+    right:
+      - icon: github
+        href: https://github.com/maple60/dem-twi-r
+        aria-label: GitHub
 
 execute:
   freeze: auto
