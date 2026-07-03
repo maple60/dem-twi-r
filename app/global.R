@@ -57,12 +57,7 @@ downsample_raster_for_leaflet <- function(
   terra::aggregate(r, fact = aggregate_factor, fun = mean, na.rm = TRUE)
 }
 
-raster_value_range <- function(r) {
-  value_range <- tryCatch(
-    as.numeric(terra::global(r, range, na.rm = TRUE)[1, ]),
-    error = function(e) c(NA_real_, NA_real_)
-  )
-
+normalize_value_range <- function(value_range) {
   if (length(value_range) != 2 || any(!is.finite(value_range))) {
     return(c(0, 1))
   }
@@ -72,6 +67,39 @@ raster_value_range <- function(r) {
   }
 
   value_range
+}
+
+raster_value_range <- function(r) {
+  value_range <- tryCatch(
+    as.numeric(terra::global(r, range, na.rm = TRUE)[1, ]),
+    error = function(e) c(NA_real_, NA_real_)
+  )
+
+  normalize_value_range(value_range)
+}
+
+raster_paths_value_range <- function(paths) {
+  if (length(paths) == 0) {
+    return(c(0, 1))
+  }
+
+  ranges <- lapply(paths, function(path) {
+    tryCatch(
+      as.numeric(terra::global(terra::rast(path), range, na.rm = TRUE)[1, ]),
+      error = function(e) c(NA_real_, NA_real_)
+    )
+  })
+  ranges <- do.call(rbind, ranges)
+
+  mins <- ranges[, 1]
+  maxs <- ranges[, 2]
+  mins <- mins[is.finite(mins)]
+  maxs <- maxs[is.finite(maxs)]
+  if (length(mins) == 0 || length(maxs) == 0) {
+    return(c(0, 1))
+  }
+
+  normalize_value_range(c(min(mins), max(maxs)))
 }
 
 raster_lonlat_bounds <- function(r) {
@@ -139,11 +167,15 @@ add_reset_view_control <- function(map, bounds) {
   htmlwidgets::onRender(map, js)
 }
 
-leaflet_raster_map <- function(r, title, colors) {
+leaflet_raster_map <- function(r, title, colors, value_range = NULL) {
   check_packages(c("terra", "leaflet"))
 
   preview <- downsample_raster_for_leaflet(r)
-  value_range <- raster_value_range(preview)
+  if (is.null(value_range)) {
+    value_range <- raster_value_range(preview)
+  } else {
+    value_range <- normalize_value_range(value_range)
+  }
   palette <- leaflet::colorNumeric(
     palette = grDevices::colorRampPalette(colors)(256),
     domain = value_range,
@@ -711,6 +743,9 @@ run_twi_workflow <- function(
     analysis_dem = analysis_dem_path,
     breached = breached_path,
     slope = slope_path,
+    twi_range = raster_paths_value_range(
+      vapply(results, function(item) item$twi, character(1))
+    ),
     algorithms = results,
     output_dir = output_dir,
     finished_at = Sys.time()

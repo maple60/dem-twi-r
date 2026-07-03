@@ -238,12 +238,27 @@ server <- function(input, output, session) {
     result$algorithms[[method]]
   })
 
+  selected_twi_range <- shiny::reactive({
+    result <- run_results()
+    shiny::req(result)
+
+    if (!is.null(result$twi_range)) {
+      return(result$twi_range)
+    }
+
+    raster_paths_value_range(
+      vapply(result$algorithms, function(item) item$twi, character(1))
+    )
+  })
+
   output$twi_plot <- shiny::renderPlot({
     result <- selected_result()
+    twi_range <- selected_twi_range()
     twi <- terra::rast(result$twi)
     terra::plot(
       twi,
       col = viridis_colors(),
+      range = twi_range,
       axes = FALSE,
       main = paste("TWI", result$algorithm)
     )
@@ -256,11 +271,13 @@ server <- function(input, output, session) {
 
   output$twi_map <- leaflet::renderLeaflet({
     result <- selected_result()
+    twi_range <- selected_twi_range()
     twi <- terra::rast(result$twi)
     leaflet_raster_map(
       twi,
       title = paste("TWI", result$algorithm),
-      colors = viridis_colors()
+      colors = viridis_colors(),
+      value_range = twi_range
     )
   })
 
