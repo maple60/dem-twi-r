@@ -4,19 +4,23 @@ title: "DEMからTWI/TPIを計算する"
 
 このサイトでは、DEM（数値標高モデル）から地形湿潤指数（TWI）や地形位置指数（TPI）をRで計算するための考え方と実装例を整理します。
 
-## Articles
-
-- [TWI研究レビュー](articles/twi-review.qmd)
-- [TWIの計算実装](articles/twi-implementation.qmd)
-
 ## Notebooks
 
-- [DEMデータの準備](notebooks/dem_download.qmd)
+- [DEMデータの準備 (未完成)](notebooks/dem_download.qmd)
 - [地形湿潤指数の計算](notebooks/topological_wetness_index.qmd)
 - [地形位置指数の計算](notebooks/topological_position_index.qmd)
 
 ## App
 
-通常版のShinyアプリは `app/` に置いています。GeoTIFFの読み込み、`terra`、WhiteboxToolsを使う実処理はローカルまたはShiny向けホスティングで動かす想定です。
+[Shinylive](https://shiny.posit.co/py/get-started/shinylive.html)という、静的サイト上でShinyアプリを動かす仕組みを使って、合成DEMによるTWIの概念デモを公開しています。
 
-試験的に、ブラウザだけで動く軽量版を [Shinylive App](app/) として公開します。この版は合成DEMを使ったTWIの概念デモで、実データ処理は行いません。
+WhiteboxToolsをShinyliveで動作させるのはどうやら難しそうだったので、完全なアプリケーションではありません。
+自分のDEMやサンプルデータを使ってTWIやTPIを計算するアプリケーションも以下で公開しています。
+ご興味があればお試しください。
+
+- [TWI/TPI計算](https://maple60-dem-terrain-indices-app.share.connect.posit.cloud/)
+
+こちらのアプリケーションは、[Posit connect cloud](https://posit.co/products/enterprise/connect-cloud)というホスティングサービス上で動作しています。
+コードは以下からご確認いただけます。
+
+- [maple60/dem-terrain-indices-app](https://github.com/maple60/dem-terrain-indices-app)
