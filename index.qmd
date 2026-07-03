@@ -12,7 +12,8 @@ title: "DEMからTWI/TPIを計算する"
 ## Notebooks
 
 - [DEMデータの準備](notebooks/dem_download.qmd)
-- [TWI計算ノート](notebooks/twi_test.qmd)
+- [地形湿潤指数の計算](notebooks/topological_wetness_index.qmd)
+- [地形位置指数の計算](notebooks/topological_position_index.qmd)
 
 ## App
 
