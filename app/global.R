@@ -172,6 +172,199 @@ twi_statistics_table <- function(results) {
   table
 }
 
+safe_file_stem <- function(x) {
+  x <- tolower(gsub("[^A-Za-z0-9]+", "_", as.character(x)))
+  x <- gsub("^_+|_+$", "", x)
+  if (!nzchar(x)) {
+    return("item")
+  }
+
+  x
+}
+
+format_condition_value <- function(x) {
+  if (is.null(x) || length(x) == 0) {
+    return("")
+  }
+
+  if (inherits(x, "POSIXt")) {
+    return(format(x, "%Y-%m-%d %H:%M:%S %Z"))
+  }
+
+  if (is.logical(x)) {
+    return(paste(ifelse(x, "TRUE", "FALSE"), collapse = ", "))
+  }
+
+  paste(as.character(x), collapse = ", ")
+}
+
+result_conditions_table <- function(result, selected_methods) {
+  parameters <- result$parameters
+  if (is.null(parameters)) {
+    parameters <- list()
+  }
+
+  selected_labels <- algorithm_labels(selected_methods)
+  data.frame(
+    item = c(
+      "finished_at",
+      "selected_algorithms",
+      "selected_algorithm_labels",
+      "all_calculated_algorithms",
+      "breach_dist",
+      "breach_fill",
+      "project_dem",
+      "target_epsg",
+      "input_dem",
+      "analysis_dem",
+      "output_dir",
+      "twi_range_min",
+      "twi_range_max"
+    ),
+    value = c(
+      format_condition_value(result$finished_at),
+      format_condition_value(selected_methods),
+      format_condition_value(selected_labels),
+      format_condition_value(parameters$algorithms),
+      format_condition_value(parameters$breach_dist),
+      format_condition_value(parameters$breach_fill),
+      format_condition_value(parameters$project_dem),
+      format_condition_value(parameters$target_epsg),
+      normalizePath(result$input_dem, winslash = "/", mustWork = FALSE),
+      normalizePath(result$analysis_dem, winslash = "/", mustWork = FALSE),
+      normalizePath(result$output_dir, winslash = "/", mustWork = FALSE),
+      format_condition_value(result$twi_range[1]),
+      format_condition_value(result$twi_range[2])
+    ),
+    stringsAsFactors = FALSE
+  )
+}
+
+copy_bundle_file <- function(source_path, bundle_dir, relative_path) {
+  if (is.null(source_path) || !file.exists(source_path)) {
+    stop("Result file was not found: ", source_path, call. = FALSE)
+  }
+
+  target_path <- file.path(bundle_dir, relative_path)
+  dir.create(dirname(target_path), recursive = TRUE, showWarnings = FALSE)
+  ok <- file.copy(source_path, target_path, overwrite = TRUE)
+  if (!ok) {
+    stop("Failed to copy result file: ", source_path, call. = FALSE)
+  }
+
+  data.frame(
+    source_path = normalizePath(source_path, winslash = "/", mustWork = FALSE),
+    bundle_path = gsub("\\\\", "/", relative_path),
+    stringsAsFactors = FALSE
+  )
+}
+
+create_twi_results_zip <- function(result, methods, zipfile) {
+  methods <- intersect(methods, names(result$algorithms))
+  if (length(methods) == 0) {
+    stop("保存する結果を1つ以上選んでください。", call. = FALSE)
+  }
+
+  selected_results <- result$algorithms[methods]
+  bundle_dir <- tempfile("twi_results_bundle_")
+  dir.create(bundle_dir, recursive = TRUE)
+  on.exit(unlink(bundle_dir, recursive = TRUE, force = TRUE), add = TRUE)
+
+  metadata_dir <- file.path(bundle_dir, "metadata")
+  dir.create(metadata_dir, recursive = TRUE)
+  write.csv(
+    result_conditions_table(result, methods),
+    file.path(metadata_dir, "calculation_conditions.csv"),
+    row.names = FALSE,
+    na = "",
+    fileEncoding = "UTF-8"
+  )
+  write.csv(
+    twi_statistics_table(selected_results),
+    file.path(metadata_dir, "twi_statistics.csv"),
+    row.names = FALSE,
+    na = "",
+    fileEncoding = "UTF-8"
+  )
+
+  file_records <- list()
+  add_record <- function(record, file_type, method = "", algorithm = "") {
+    record$file_type <- file_type
+    record$method <- method
+    record$algorithm <- algorithm
+    file_records[[length(file_records) + 1]] <<- record[
+      c("file_type", "method", "algorithm", "source_path", "bundle_path")
+    ]
+  }
+
+  if (!identical(normalizePath(result$analysis_dem, mustWork = FALSE),
+                 normalizePath(result$input_dem, mustWork = FALSE))) {
+    add_record(
+      copy_bundle_file(result$analysis_dem, bundle_dir, "shared/dem_projected.tif"),
+      "projected_dem"
+    )
+  }
+  add_record(
+    copy_bundle_file(result$breached, bundle_dir, "shared/dem_breached.tif"),
+    "breached_dem"
+  )
+  add_record(
+    copy_bundle_file(result$slope, bundle_dir, "shared/dem_breached_slope.tif"),
+    "slope"
+  )
+
+  for (method in methods) {
+    item <- result$algorithms[[method]]
+    method_dir <- file.path("algorithms", safe_file_stem(method))
+    add_record(
+      copy_bundle_file(
+        item$accumulation,
+        bundle_dir,
+        file.path(method_dir, paste0("flow_accumulation_", method, ".tif"))
+      ),
+      "flow_accumulation",
+      method,
+      item$algorithm
+    )
+    add_record(
+      copy_bundle_file(
+        item$twi,
+        bundle_dir,
+        file.path(method_dir, paste0("twi_", method, ".tif"))
+      ),
+      "twi",
+      method,
+      item$algorithm
+    )
+  }
+
+  output_files <- do.call(rbind, file_records)
+  write.csv(
+    output_files,
+    file.path(metadata_dir, "output_files.csv"),
+    row.names = FALSE,
+    na = "",
+    fileEncoding = "UTF-8"
+  )
+
+  bundle_files <- list.files(bundle_dir, recursive = TRUE, all.files = FALSE)
+  if (length(bundle_files) == 0) {
+    stop("No files were prepared for download.", call. = FALSE)
+  }
+
+  if (file.exists(zipfile)) {
+    unlink(zipfile)
+  }
+  old_wd <- setwd(bundle_dir)
+  on.exit(setwd(old_wd), add = TRUE)
+  status <- utils::zip(zipfile, bundle_files)
+  if (!identical(status, 0L) && !identical(status, 0)) {
+    stop("Failed to create the result zip file.", call. = FALSE)
+  }
+
+  invisible(zipfile)
+}
+
 raster_lonlat_bounds <- function(r) {
   ext <- terra::ext(r)
   corners <- data.frame(
@@ -753,10 +946,16 @@ run_twi_workflow <- function(
   dir.create(output_dir, showWarnings = FALSE, recursive = TRUE)
 
   analysis_dem_path <- dem_path
+  target_epsg_normalized <- ""
   if (isTRUE(project_dem)) {
     projected_path <- file.path(output_dir, "dem_projected.tif")
-    progress(paste("Projection:", normalize_epsg(target_epsg)))
-    analysis_dem_path <- project_dem_to_epsg(dem, target_epsg, projected_path)
+    target_epsg_normalized <- normalize_epsg(target_epsg)
+    progress(paste("Projection:", target_epsg_normalized))
+    analysis_dem_path <- project_dem_to_epsg(
+      dem,
+      target_epsg_normalized,
+      projected_path
+    )
     dem <- terra::rast(analysis_dem_path)
   }
 
@@ -813,6 +1012,14 @@ run_twi_workflow <- function(
     analysis_dem = analysis_dem_path,
     breached = breached_path,
     slope = slope_path,
+    parameters = list(
+      algorithms = algorithms,
+      algorithm_labels = algorithm_labels(algorithms),
+      breach_dist = breach_dist,
+      breach_fill = breach_fill,
+      project_dem = isTRUE(project_dem),
+      target_epsg = target_epsg_normalized
+    ),
     twi_range = raster_paths_value_range(
       vapply(results, function(item) item$twi, character(1))
     ),

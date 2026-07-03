@@ -18,6 +18,11 @@ server <- function(input, output, session) {
       "result_algorithm",
       choices = character(0)
     )
+    shiny::updateCheckboxGroupInput(
+      session,
+      "download_algorithms",
+      choices = character(0)
+    )
   }
 
   append_status <- function(message) {
@@ -211,6 +216,12 @@ server <- function(input, output, session) {
           choices = choices,
           selected = names(result$algorithms)[1]
         )
+        shiny::updateCheckboxGroupInput(
+          session,
+          "download_algorithms",
+          choices = choices,
+          selected = names(result$algorithms)
+        )
         append_status("TWI計算が完了しました。")
       },
       error = function(e) {
@@ -339,5 +350,34 @@ server <- function(input, output, session) {
       result <- selected_result()
       file.copy(result$twi, file, overwrite = TRUE)
     }
+  )
+
+  output$download_results <- shiny::downloadHandler(
+    filename = function() {
+      result <- run_results()
+      shiny::req(result)
+
+      paste0(
+        "twi_results_",
+        format(result$finished_at, "%Y%m%d_%H%M%S"),
+        ".zip"
+      )
+    },
+    content = function(file) {
+      result <- run_results()
+      shiny::req(result)
+
+      methods <- input$download_algorithms
+      if (is.null(methods) || length(methods) == 0) {
+        shiny::showNotification(
+          "保存する結果を1つ以上選んでください。",
+          type = "error"
+        )
+        stop("保存する結果を1つ以上選んでください。", call. = FALSE)
+      }
+
+      create_twi_results_zip(result, methods, file)
+    },
+    contentType = "application/zip"
   )
 }

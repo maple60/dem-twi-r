@@ -73,7 +73,13 @@ ui <- shiny::fluidPage(
         "結果プレビュー",
         choices = character(0)
       ),
-      shiny::downloadButton("download_twi", "選択中のTWIを保存")
+      shiny::downloadButton("download_twi", "選択中のTWIを保存"),
+      shiny::checkboxGroupInput(
+        "download_algorithms",
+        "保存する結果",
+        choices = character(0)
+      ),
+      shiny::downloadButton("download_results", "チェックした結果一式を保存")
     ),
     shiny::mainPanel(
       shiny::tabsetPanel(
