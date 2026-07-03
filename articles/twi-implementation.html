@@ -1,0 +1,1180 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ja" xml:lang="ja"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.36">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>森林研究におけるTWIの応用と計算実装 – DEMからTWI/TPIを計算する</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-845c23b38eaddc0f92fda52bfe77a8c8.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-a0f9fd0d421825b736dc1bbcbcba2219.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "一致なし",
+    "search-matching-documents-text": "一致した文書",
+    "search-copy-link-title": "検索へのリンクをコピー",
+    "search-hide-matches-text": "追加の検索結果を非表示",
+    "search-more-match-text": "追加の検索結果",
+    "search-more-matches-text": "追加の検索結果",
+    "search-clear-button-title": "消去",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "取消",
+    "search-submit-button-title": "検索",
+    "search-label": "サーチ"
+  }
+}</script>
+<script src="../site_libs/quarto-diagram/mermaid.min.js"></script>
+<script src="../site_libs/quarto-diagram/mermaid-init.js"></script>
+<link href="../site_libs/quarto-diagram/mermaid.css" rel="stylesheet">
+
+
+</head>
+
+<body class="nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="../index.html">
+    <span class="navbar-title">DEMからTWI/TPIを計算する</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="サーチ"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="ナビゲーションを切り替える" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../index.html"> 
+<span class="menu-text">Home</span></a>
+  </li>  
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-articles" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">Articles</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-articles">    
+        <li>
+    <a class="dropdown-item" href="../articles/twi-review.html">
+ <span class="dropdown-text">TWI研究レビュー</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../articles/twi-implementation.html">
+ <span class="dropdown-text">TWIの計算実装</span></a>
+  </li>  
+    </ul>
+  </li>
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-notebooks" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">Notebooks</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-notebooks">    
+        <li>
+    <a class="dropdown-item" href="../notebooks/dem_download.html">
+ <span class="dropdown-text">DEMデータの準備</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../notebooks/twi_test.html">
+ <span class="dropdown-text">TWI計算ノート</span></a>
+  </li>  
+    </ul>
+  </li>
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">目次</h2>
+   
+  <ul>
+  <li><a href="#エグゼクティブサマリ" id="toc-エグゼクティブサマリ" class="nav-link active" data-scroll-target="#エグゼクティブサマリ">エグゼクティブサマリ</a></li>
+  <li><a href="#twiの定義と理論基盤" id="toc-twiの定義と理論基盤" class="nav-link" data-scroll-target="#twiの定義と理論基盤">TWIの定義と理論基盤</a></li>
+  <li><a href="#森林分野での用途と主要研究" id="toc-森林分野での用途と主要研究" class="nav-link" data-scroll-target="#森林分野での用途と主要研究">森林分野での用途と主要研究</a></li>
+  <li><a href="#dem入力条件と流域解析アルゴリズム" id="toc-dem入力条件と流域解析アルゴリズム" class="nav-link" data-scroll-target="#dem入力条件と流域解析アルゴリズム">DEM入力条件と流域解析アルゴリズム</a></li>
+  <li><a href="#rpythongisでの計算実装" id="toc-rpythongisでの計算実装" class="nav-link" data-scroll-target="#rpythongisでの計算実装">R・Python・GISでの計算実装</a>
+  <ul class="collapse">
+  <li><a href="#rの実用スニペット" id="toc-rの実用スニペット" class="nav-link" data-scroll-target="#rの実用スニペット">Rの実用スニペット</a></li>
+  <li><a href="#pythonの実用スニペット" id="toc-pythonの実用スニペット" class="nav-link" data-scroll-target="#pythonの実用スニペット">Pythonの実用スニペット</a></li>
+  <li><a href="#arcgis-pro-の標準式例" id="toc-arcgis-pro-の標準式例" class="nav-link" data-scroll-target="#arcgis-pro-の標準式例">ArcGIS Pro の標準式例</a></li>
+  </ul></li>
+  <li><a href="#検証計算コスト推奨ワークフロー" id="toc-検証計算コスト推奨ワークフロー" class="nav-link" data-scroll-target="#検証計算コスト推奨ワークフロー">検証・計算コスト・推奨ワークフロー</a></li>
+  <li><a href="#参考文献と公式ドキュメント" id="toc-参考文献と公式ドキュメント" class="nav-link" data-scroll-target="#参考文献と公式ドキュメント">参考文献と公式ドキュメント</a>
+  <ul class="collapse">
+  <li><a href="#主要論文" id="toc-主要論文" class="nav-link" data-scroll-target="#主要論文">主要論文</a></li>
+  <li><a href="#主要ツールの公式ドキュメント" id="toc-主要ツールの公式ドキュメント" class="nav-link" data-scroll-target="#主要ツールの公式ドキュメント">主要ツールの公式ドキュメント</a></li>
+  <li><a href="#最終的な推奨" id="toc-最終的な推奨" class="nav-link" data-scroll-target="#最終的な推奨">最終的な推奨</a></li>
+  </ul></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">森林研究におけるTWIの応用と計算実装</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="エグゼクティブサマリ" class="level2">
+<h2 class="anchored" data-anchor-id="エグゼクティブサマリ">エグゼクティブサマリ</h2>
+<p>Topographic Wetness Index（TWI、地形湿潤指数）は、流入しうる上流寄与面積と局所傾斜から、地形が相対的に「湿りやすい」かを表す地形指標で、もともとは TOPMODEL の理論背景の中で整理された。標準形は <strong>ln(a / tanβ)</strong> で、<code>a</code> は等高線長あたりの上流寄与面積（specific catchment area, SCA）、<code>β</code> は局所傾斜角である。Beven &amp; Kirkby の原論文とその後の整理では、この指数は「飽和しやすさ」の地形的な近似であり、厳密な土壌水分そのものではないが、地形制御を要約する簡潔な指標として広く使われてきた。</p>
+<p>森林分野での主要用途は、土壌水分・地下水位・湿潤度の proxy、植生分布や下層植生群集の説明、樹種生産力や site index の推定、森林土壌型や土壌炭素・窒素の空間分布推定、森林道路や雪害などの立地リスク評価である。英語圏では森林植生・土壌水分との対応を精査した研究が多く、日本ではスギ人工林の地位指数推定、森林土壌型推定、土壌 C/N 蓄積の地形制御評価に利用されている。</p>
+<p>実務上の最大の論点は、<strong>TWI そのものより前段の DEM 処理と flow-routing algorithm の選択</strong>にある。Sørensen ら、Kopecký ら、Riihimäki らは、TWI の説明力が DEM 解像度、凹地処理、平坦地処理、流向アルゴリズムに強く依存することを示している。単流向の D8 は流路を鋭く描きやすい一方で尾根・凸地形で人工的な集中を起こしやすく、森林の土壌水分や植生のような「分散流」を扱う用途では、MFD 系や D∞ 系がしばしば有利だった。もっとも、最良の解像度やアルゴリズムは一意ではなく、研究対象の斜面形状、DEM 品質、検証データの時間スケールに依存する。</p>
+<p>R と Python では、<strong>地形微分は <code>terra</code> / <code>richdem</code> / <code>xrspatial</code>、水文学的前処理と集水計算は <code>whitebox</code> / <code>RSAGA</code> / <code>GRASS</code> / <code>TauDEM</code> / <code>pysheds</code> に任せる</strong>のが実用的である。<code>terra</code> や <code>rasterio</code> / <code>rioxarray</code> は基盤 I/O と傾斜計算に向き、<code>whitebox</code> は D8・FD8・D∞ 系や凹地 breach/fill を比較的再現性高く自動化しやすい。QGIS は SAGA・GRASS・TauDEM・WhiteboxTools を Processing から統合でき、ArcGIS Pro は Flow Direction / Flow Accumulation / Slope / Raster Calculator を組み合わせ、ModelBuilder で標準化できる。</p>
+<p>森林研究向けの推奨は次の通りである。小規模・高精細の LiDAR 解析では、<strong>breach/fill → slope → D∞ か FD8/MFD → SCA → TWI → 現地土壌水分/地下水位/植生データで検証</strong>が第一選択になる。広域の 5–10 m DEM を使う場合は、まず D8 と MFD/D∞ の感度比較を行い、指標の頑健性を確認する。大規模領域では、ArcGIS の並列処理、GRASS の disk-swap mode、SAGA の parallelizable flow accumulation、Whitebox の並列実装、xarray-spatial + Dask/CuPy の分散計算を使い分けるのが現実的である。</p>
+</section>
+<section id="twiの定義と理論基盤" class="level2">
+<h2 class="anchored" data-anchor-id="twiの定義と理論基盤">TWIの定義と理論基盤</h2>
+<p>TWI の標準定義は <strong>λ = ln(a / tanβ)</strong> である。ここで <code>a</code> はそのセルを通過する等高線長あたりの上流寄与面積、<code>β</code> は局所傾斜角で、GRASS <code>r.topidx</code> と Whitebox の <code>WetnessIndex</code> はこの形をそのまま採っている。Beven &amp; Kirkby の TOPMODEL 史をまとめたレビューでも、地形指数の核は <code>a / tanβ</code> にあり、地形が動的な飽和寄与域をどう形づくるかをパーシモニアスに表現するための指標として導入されたと整理されている。</p>
+<p>ただし、TWI は「静的な地形指数」であって、土壌水分や地下水位の物理過程を完全に表すわけではない。Riihimäki らは、現地土壌水分との関係は全体として modest であり、最良条件でも説明力は限定的であると報告した。Rinderer らも、TWI と浅層地下水位の関係は時間的に一定ではなく、降雨イベント開始時には相関が弱まることを示した。したがって、森林で TWI を使うときは、<strong>「湿潤条件の地形的な可能性」</strong>を表す proxy と理解するのが妥当である。</p>
+<p>TWI の実装にはいくつかの変種がある。もっとも基本的なのは Beven &amp; Kirkby 型の標準 TWI で、GIS 実装では Whitebox や GRASS <code>r.topidx</code> が近い。SAGA には標準の <strong>Topographic Wetness Index</strong> ツールに加え、<strong>SAGA Wetness Index</strong> があり、後者は “modified catchment area” を用いて谷底付近の湿潤ポテンシャルを標準 TWI より高く見積もるよう設計されている。SAGA Wetness Index は、area type、slope type、suction、slope offset などのパラメータを持ち、谷底の薄膜流仮定を緩めた指数と考えると理解しやすい。</p>
+<p>さらに、同じ <code>ln(a / tanβ)</code> でも、<code>a</code> の定義が異なる。ここで重要なのは次の区別である。総集水面積（TCA）をそのまま使う実装、セルサイズで割った <strong>pseudo specific catchment area</strong> を使う実装、流幅を考慮して SCA に変換する実装が混在する。SAGA の TWI ツールは “no conversion” と “1 / cell size” を切り替えられ、SAGA の Flow Width and Specific Catchment Area ツールは、TCA から flow width と SCA を作り分ける。Kopecký らのガイドラインでは、流量配分アルゴリズムの影響が大きい一方、flow width の扱いは比較的小さいが無視はできず、計算式の細部が統計結果を変えうることが示されている。</p>
+<p>TWI 実装で頻出する数値問題は、<strong>傾斜が極小またはゼロのセル</strong>である。Whitebox は slope = 0 のセルに 32767 という任意の高値を入れる仕様で、ArcGIS の <code>Ln</code> は入力が 0 以下だと NoData になる。したがって、極平坦地を含む森林湿地や谷底では、最小傾斜の下限値を設ける、SAGA Wetness Index のような修正版を用いる、あるいは結果を分位階級で解釈するのが安全である。</p>
+<div class="cell" data-layout-align="default">
+<div class="cell-output-display">
+<div>
+<p></p><figure class="figure"><p></p>
+<div>
+<pre class="mermaid mermaid-js">flowchart LR
+    A["DEM取得"] --&gt; B["投影と解像度確認"]
+    B --&gt; C["欠損・凹地・平坦地処理"]
+    C --&gt; D["傾斜計算"]
+    C --&gt; E["流向計算 D8 MFD D∞"]
+    E --&gt; F["流量蓄積とSCA"]
+    D --&gt; G["TWI計算 ln(a / tanβ)"]
+    F --&gt; G
+    G --&gt; H["可視化"]
+    G --&gt; I["現地土壌水分・地下水位・植生で検証"]
+</pre>
+</div>
+<p></p></figure><p></p>
+</div>
+</div>
+</div>
+<p>上の流れは、QGIS の TWI モデル作成チュートリアル、ArcGIS の Flow Direction / Flow Accumulation ワークフロー、Whitebox の hydrological workflow、GRASS/SAGA の公式実装に共通する最小構成を抽象化したものだ。</p>
+</section>
+<section id="森林分野での用途と主要研究" class="level2">
+<h2 class="anchored" data-anchor-id="森林分野での用途と主要研究">森林分野での用途と主要研究</h2>
+<p>森林分野での TWI 利用は、大きく分けると <strong>水分環境の proxy、植生・群集応答、森林生産力、森林土壌・炭素窒素、リスク評価</strong>に整理できる。代表文献を先に表でまとめる。</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>研究テーマ</th>
+<th>代表文献</th>
+<th>主な対象</th>
+<th>主要な示唆</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>TWIの起源・TOPMODEL</td>
+<td>Beven &amp; Kirkby 1979</td>
+<td>小〜中流域水文</td>
+<td>地形指数 <code>a/tanβ</code> に基づく variable contributing area の理論基盤</td>
+</tr>
+<tr class="even">
+<td>TWI計算手法の比較</td>
+<td>Sørensen et al.&nbsp;2006</td>
+<td>現地観測つき景観</td>
+<td>アルゴリズムと slope 定義で TWI の説明力が変わる</td>
+</tr>
+<tr class="odd">
+<td>森林植生への適用</td>
+<td>Kopecký &amp; Čížková 2010</td>
+<td>チェコの森林植生</td>
+<td>flow-routing の選択で植生との相関が大きく変化</td>
+</tr>
+<tr class="even">
+<td>森林土壌水分の計算法指針</td>
+<td>Kopecký et al.&nbsp;2021</td>
+<td>温帯林の土壌水分・植物群集</td>
+<td>D8 はしばしば不利、MFD 系が優位な場面が多い</td>
+</tr>
+<tr class="odd">
+<td>地形と土壌水分の関係</td>
+<td>Riihimäki et al.&nbsp;2021</td>
+<td>5,200プロット、46,000超の観測</td>
+<td>最良は 2 m + MFD 系、ただし総じて説明力は限定的</td>
+</tr>
+<tr class="even">
+<td>長期土壌水分 proxy 評価</td>
+<td>Winzeler et al.&nbsp;2022</td>
+<td>アグロフォレストリー catena</td>
+<td>546 通りの TWI を比較し、前処理・一般化の影響を定量化</td>
+</tr>
+<tr class="odd">
+<td>地下水位との対応</td>
+<td>Rinderer et al.&nbsp;2014</td>
+<td>急峻な前アルプス流域</td>
+<td>TWI 仮定の妥当性は時期依存で一定ではない</td>
+</tr>
+<tr class="even">
+<td>森林組成・生産力</td>
+<td>Iverson et al.&nbsp;1997</td>
+<td>GIS由来 moisture index</td>
+<td>森林組成・site productivity 予測に湿潤指標が有効</td>
+</tr>
+<tr class="odd">
+<td>スギ地位指数の推定</td>
+<td>Mitsuda et al.&nbsp;2007</td>
+<td>宮崎県スギ人工林</td>
+<td>GIS 由来地形要因が site index を説明</td>
+</tr>
+<tr class="even">
+<td>スギ林の土壌C/N・生産力</td>
+<td>Zushi 2006</td>
+<td>富山のスギ林</td>
+<td>地形指標で soil C/N storage と site productivity の空間差を評価</td>
+</tr>
+<tr class="odd">
+<td>森林土壌型とTWI</td>
+<td>稲垣ら 2018</td>
+<td>全国森林土壌データ</td>
+<td>湿潤型の土壌ほど TWI が高くなる傾向</td>
+</tr>
+<tr class="even">
+<td>森林分野での技術解説</td>
+<td>森林総研九州 2018</td>
+<td>九州の土壌情報推定</td>
+<td>5 m と 10 m DEM で TWI が異なり、解像度感度が大きい</td>
+</tr>
+</tbody>
+</table>
+<p>森林生態学では、Kopecký &amp; Čížková が 11 種類の flow-routing algorithm を比較し、森林植物群落と TWI の対応がアルゴリズム選択で大きく変わることを示した。温帯林の土壌水分と植物種組成を使った Kopecký らの後続研究でも、もっともよく使われがちな D8 は、FD8 などの複数流向法より説明力がかなり低い場合があり、<strong>森林の植生・土壌水分用途では “どの TWI でも同じ” ではない</strong>ことが強調された。</p>
+<p>森林水文学では、Rinderer らが急峻な森林流域で浅層地下水位との対応を調べ、TWI が平均的な空間パターンをある程度捉えても、イベント中は steady-state 仮定が崩れやすいことを示した。Riihimäki らも、大規模な土壌水分観測から、TWI は使えるが万能ではなく、流向法と DEM 解像度に強く左右されると結論した。つまり、森林流域で TWI を使う場合、<strong>定常状態に近い平均的湿潤度の地形制約</strong>として使うのは合理的だが、イベント時水分動態や樹冠遮断・根系吸水まで説明するものではない。</p>
+<p>森林生産力の文脈では、日本のスギ人工林研究が重要である。Mitsuda らは宮崎県のスギ plantation で GIS 由来地形要因を用いた site index モデルを構築し、DEM 品質や解析スケールがモデル性能に効くことを後続研究で示した。Zushi は富山県のスギ林で soil C and N storage と site productivity の景観スケール変動を digital terrain modeling で評価した。森林総研九州の解説資料と稲垣らの全国比較では、TWI が褐色森林土の土壌型や乾湿傾向と対応しうることが示され、日本の森林立地診断において TWI が実務的な補助変数になりうることが分かる。</p>
+<p>応用範囲はさらに広く、森林道路の排水不良や表面損傷の評価、冠雪害などの地形的危険度評価にも拡張されている。LiDAR ベースの道路品質研究では，道路面・側溝・集水の幾何学を把握する補助指標として湿潤関連地形量が利用され、日本の冠雪害研究でも TWI が地形要因の一つとして採用されている。これらは「森林そのもの」だけでなく、<strong>森林管理インフラと攪乱リスク</strong>に TWI が浸透していることを示す。</p>
+<p>総合すると、森林分野での TWI の長所は、土壌水分を直接観測しなくても DEM だけで広域推定できる点にある。一方、弱点は、樹冠遮断、土壌深、母材、透水性、人工排水、林道切土盛土など、森林の重要因子を直接含まない点である。そのため、TWI は<strong>単独の説明変数より、地質・土壌・気候・距離 to stream・日射量・開度と併用する地形湿潤 proxy</strong>として使うのが最も成功しやすい。</p>
+</section>
+<section id="dem入力条件と流域解析アルゴリズム" class="level2">
+<h2 class="anchored" data-anchor-id="dem入力条件と流域解析アルゴリズム">DEM入力条件と流域解析アルゴリズム</h2>
+<p>TWI の入力条件として第一に重要なのは DEM の座標系である。TWI は面積と傾斜を組み合わせるため、<strong>地理座標の度単位より、投影済みのメートル系 CRS</strong>で扱う方が安全だ。<code>terra::terrain()</code> は CRS を参照して planar と lon/lat を区別し、Rasterio も CRS と affine transform を明示的に保持する。ここから導ける実務上の原則は、研究対象が狭域〜中域の森林なら、まず等距離・等面積に近い適切な投影へそろえてから前処理と水文解析を行うことだ。これは公式ドキュメントからの実務的推論である。</p>
+<p>解像度については、固定的な最適値はない。Riihimäki らの boreal 研究では 1–30 m の比較で 2 m + MFD 系が最も高い性能を示したが、全体として説明力は高すぎなかった。Winzeler らの多期間比較でも DEM 一般化と計算法の影響が大きく、森林総研九州は 5 m と 10 m DEM で TWI 値が大きく変わると報告している。したがって、森林研究では、おおむね <strong>微地形やゼロ次谷を見たいなら 1–5 m LiDAR DTM、広域比較や既往全国データとの整合性を重視するなら 5–10 m DEM</strong> が現実的な出発点になる。これは複数研究を統合した推奨である。</p>
+<p>前処理では、穴埋め、凹地処理、平坦地処理が必須に近い。SAGA の Wang &amp; Liu sink fill は、凹地を埋めながら flow path に最小勾配を保持できる。GRASS <code>r.fill.dir</code> は depressionless DEM と flow direction map を同時に生成する。Whitebox には least-cost breaching があり、ArcGIS Fill は sink depth に基づく <code>z-limit</code> を設定できる。凹地を「埋める」か「切り開く」かは DEM の性質に依存し、LiDAR 由来微地形や湿地・轍を重要視する森林作業道や谷頭部研究では、過度の fill が本物の微地形を消す危険がある。</p>
+<p>スムージングは二面性がある。ArcGIS の Slope / Surface Parameters は、高解像度データでウィンドウサイズを広げるとノイズを抑えられることを示している一方、森林研究ではスムージングが谷頭や路網周辺の微地形を消しうる。Kopecký らや Winzeler らの結果を見ると、前処理は有効だが、<strong>強い平滑化は“湿潤度を表す微地形情報”そのものを薄める</strong>ことがある。したがって、平滑化は標準処理ではなく感度分析対象にするのがよい。</p>
+<p>流域解析アルゴリズムは、TWI の性質を最も強く左右する。主要法を整理すると次のようになる。</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 20%">
+<col style="width: 20%">
+<col style="width: 20%">
+<col style="width: 20%">
+<col style="width: 20%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>アルゴリズム</th>
+<th>基本発想</th>
+<th>長所</th>
+<th>弱点</th>
+<th>代表実装</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>D8</td>
+<td>最急降下する1近傍へ全流量を配分</td>
+<td>流路が明瞭、計算が速い</td>
+<td>格子依存、凸地形で過集中</td>
+<td>ArcGIS D8、GRASS SFD、SAGA D8、pysheds D8</td>
+</tr>
+<tr class="even">
+<td>FD8 / Quinn / Freeman 系 MFD</td>
+<td>全ての下方近傍へ勾配比例で分配</td>
+<td>分散流や尾根近傍に強い</td>
+<td>流路がにじみやすい</td>
+<td>SAGA MFD、Whitebox FD8、GRASS MFD default</td>
+</tr>
+<tr class="odd">
+<td>Holmgren</td>
+<td>MFD に収束パラメータを追加</td>
+<td>収束度を調整可能</td>
+<td>パラメータ選定が必要</td>
+<td>RichDEM／文献比較で頻出</td>
+</tr>
+<tr class="even">
+<td>D∞</td>
+<td>三角 facet の最急方向を連続角として計算し2近傍へ分配</td>
+<td>D8より格子依存が小さい、流路も保ちやすい</td>
+<td>谷底や複雑微地形で万能ではない</td>
+<td>TauDEM、ArcGIS DINF、RichDEM、SAGA parallelizable</td>
+</tr>
+<tr class="odd">
+<td>Qin adaptive MFD</td>
+<td>地形条件に応じ flow-partition exponent を適応化</td>
+<td>収束・分散を局所地形に合わせやすい</td>
+<td>実装差が大きい</td>
+<td>ArcGIS MFD が採用</td>
+</tr>
+<tr class="even">
+<td>TMFD</td>
+<td>三角形ベースの multiple flow</td>
+<td>D∞ の改良系</td>
+<td>実装が限られる</td>
+<td>文献中心</td>
+</tr>
+</tbody>
+</table>
+<p>森林で土壌水分や植生を説明したい場合、文献上は MFD 系や D∞ 系が優勢なことが多い。Kopecký らは D8 が植生・土壌水分への当てはまりで不利になりやすいと報告し、Riihimäki らも multiple-flow-direction algorithms の方が DEM 誤差に頑健だったと述べている。ただし、排水ネットワーク抽出や stream initiation 閾値設定のように、流路を鋭く出したい場合は D8 に利がある。要するに、<strong>“湿潤度 proxy” には分散流法、“河道抽出” には単流向法</strong>が有利になりやすい。</p>
+<p>流路長と流域面積にも注意が必要だ。<code>a</code> に入れるべきは単なる cell count ではなく、原則として <strong>等高線長あたりの寄与面積</strong>である。SAGA は Flow Width and Specific Catchment Area を別ツールで計算でき、TauDEM D-Infinity Contributing Area は “specific catchment area within dispersed flow” を意図している。D8 では <code>(flow accumulation + 1) × cellsize</code> で疑似 SCA に近似する簡便法がよく使われるが、これは厳密な flow width を明示していない。森林研究でアルゴリズム比較をするなら、<strong>TCA と SCA を混同しないこと</strong>が最重要の実務ポイントになる。</p>
+</section>
+<section id="rpythongisでの計算実装" class="level2">
+<h2 class="anchored" data-anchor-id="rpythongisでの計算実装">R・Python・GISでの計算実装</h2>
+<p>R では、<strong><code>terra</code> を I/O・傾斜計算の土台にし、TWI 本体は <code>whitebox</code> か <code>RSAGA</code> に任せる</strong>のが今の標準解に近い。<code>terra::terrain()</code> は slope と flowdir を計算できるが、flowdir は tie の扱いが単純で、連結した排水網の生成には理想的でないとドキュメント自体が注意している。<code>RSAGA</code> は SAGA の hydrology を R から呼び出せ、<code>rsaga.wetness.index()</code> で SAGA Wetness Index を扱える。<code>whitebox</code> は <code>wbt_breach_depressions_least_cost()</code>, <code>wbt_d8_flow_accumulation()</code>, <code>wbt_fd8_flow_accumulation()</code>, <code>wbt_wetness_index()</code> などが揃っている。なお、ユーザーが挙げた <code>hydat</code> は TWI 計算用ではなく、現在は <code>tidyhydat</code> がカナダの水文観測データを扱うパッケージで、TWI の現地検証に使う側の道具だ。</p>
+<p><code>topmodel</code> パッケージは、理論学習や TOPMODEL 再現には有用だが、2024-11-11 に CRAN から archived されている。また、<code>topmodel()</code> は raster から直接 TWI を作るのではなく、<code>make.classes()</code> で作る <code>topidx</code> クラス分布を入力に取る。別途、旧 <code>topidx()</code> は DEM 行列から topographic index を計算できるが、現在の R 環境では「生の raster TWI 作成」より、<code>whitebox</code> や <code>RSAGA</code> と組み合わせる方が再現性も保守性も高い。</p>
+<section id="rの実用スニペット" class="level3">
+<h3 class="anchored" data-anchor-id="rの実用スニペット">Rの実用スニペット</h3>
+<p>以下は <code>terra</code> + <code>whitebox</code> を使う最短系の例だ。前処理・傾斜・集水・TWI をすべて実行できる。関数名と入出力要件は <code>terra</code> と <code>whitebox</code> の公式ドキュメントに基づく。</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(terra)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(whitebox)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="co"># 入力</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>dem <span class="ot">&lt;-</span> <span class="fu">rast</span>(<span class="st">"dem.tif"</span>)</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="co"># 可能なら先に投影を確認・統一</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="fu">crs</span>(dem)</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="co"># 傾斜は Whitebox の wetness_index が degree を期待する</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>slope_deg <span class="ot">&lt;-</span> <span class="fu">terrain</span>(dem, <span class="at">v =</span> <span class="st">"slope"</span>, <span class="at">unit =</span> <span class="st">"degrees"</span>, <span class="at">neighbors =</span> <span class="dv">8</span>)</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="fu">writeRaster</span>(slope_deg, <span class="st">"slope_deg.tif"</span>, <span class="at">overwrite =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="co"># DEM 前処理</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="fu">wbt_breach_depressions_least_cost</span>(</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>  <span class="at">dem =</span> <span class="st">"dem.tif"</span>,</span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>  <span class="at">output =</span> <span class="st">"dem_breached.tif"</span>,</span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>  <span class="at">dist =</span> <span class="dv">20</span>,</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>  <span class="at">fill =</span> <span class="cn">TRUE</span></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a><span class="co"># D8 または FD8 で集水量</span></span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a><span class="fu">wbt_fd8_flow_accumulation</span>(</span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>  <span class="at">input =</span> <span class="st">"dem_breached.tif"</span>,</span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>  <span class="at">output =</span> <span class="st">"sca_fd8.tif"</span></span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a><span class="co"># TWI</span></span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a><span class="fu">wbt_wetness_index</span>(</span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>  <span class="at">sca   =</span> <span class="st">"sca_fd8.tif"</span>,</span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>  <span class="at">slope =</span> <span class="st">"slope_deg.tif"</span>,</span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>  <span class="at">output =</span> <span class="st">"twi_fd8.tif"</span></span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="コピー" class="code-copy-button"><i class="bi"></i></button></div>
+<p>SAGA 系を R から使いたい場合は <code>RSAGA</code> がよい。これは標準 TWI ではなく <strong>SAGA Wetness Index</strong> を計算する点が重要だ。入力は通常 SAGA grid で、<code>area.type</code>, <code>slope.type</code>, <code>suction</code>, <code>slope.offset</code> などを明示できる。谷底寄りの湿潤推定を重視する日本の森林土壌・立地研究では、この系統が有益なことがある。</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(RSAGA)</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>env <span class="ot">&lt;-</span> <span class="fu">rsaga.env</span>()</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="fu">rsaga.wetness.index</span>(</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">in.dem =</span> <span class="st">"dem.sgrd"</span>,</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">out.wetness.index =</span> <span class="st">"swi.sgrd"</span>,</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">area.type =</span> <span class="st">"specific"</span>,</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">slope.type =</span> <span class="st">"catchment"</span>,</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">suction =</span> <span class="dv">10</span>,</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>  <span class="at">slope.min =</span> <span class="dv">0</span>,</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>  <span class="at">slope.offset =</span> <span class="fl">0.1</span>,</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>  <span class="at">env =</span> env</span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="コピー" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Python では、用途が三つに分かれる。<strong>高速で多アルゴリズム比較なら <code>whitebox</code> / <code>richdem</code>、簡明な D8 流域解析なら <code>pysheds</code>、大規模並列を見据えるなら <code>rioxarray</code> + <code>xarray-spatial</code></strong> という整理が実務的だ。Whitebox Python package は WhiteboxTools の snake_case API を使え、例として <code>feature_preserving_smoothing</code>, <code>breach_depressions</code>, <code>d_inf_flow_accumulation</code> が公式に示されている。RichDEM は D8・D∞ など複数 flow metrics、depression filling、terrain attributes を持つ高性能ライブラリだ。Pysheds は DEM conditioning, D8 flowdir, accumulation, catchment, HAND などを一連で扱いやすい。Rasterio / rioxarray は GeoTIFF I/O と CRS 管理、xarray-spatial は D8・D∞・MFD の hydrology 関数を持ち、Dask/CuPy backend でスケールする。</p>
+</section>
+<section id="pythonの実用スニペット" class="level3">
+<h3 class="anchored" data-anchor-id="pythonの実用スニペット">Pythonの実用スニペット</h3>
+<p>最も実務的なのは Whitebox ベースの実装だ。公式チュートリアル例に沿えば、DEM conditioning → D∞ accumulation → slope → wetness index の順で組める。</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> whitebox</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>wbt <span class="op">=</span> whitebox.WhiteboxTools()</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>wbt.set_working_dir(<span class="st">"."</span>)</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="co"># 1) 前処理</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>wbt.breach_depressions_least_cost(</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>    dem<span class="op">=</span><span class="st">"dem.tif"</span>,</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>    output<span class="op">=</span><span class="st">"dem_breached.tif"</span>,</span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>    dist<span class="op">=</span><span class="dv">20</span>,</span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>    fill<span class="op">=</span><span class="va">True</span></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a><span class="co"># 2) 傾斜（degree）</span></span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>wbt.slope(</span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>    dem<span class="op">=</span><span class="st">"dem_breached.tif"</span>,</span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>    output<span class="op">=</span><span class="st">"slope_deg.tif"</span></span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a><span class="co"># 3) 集水量（例: D-infinity または FD8）</span></span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>wbt.d_inf_flow_accumulation(</span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a>    i<span class="op">=</span><span class="st">"dem_breached.tif"</span>,</span>
+<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a>    output<span class="op">=</span><span class="st">"sca_dinf.tif"</span></span>
+<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a><span class="co"># 4) TWI</span></span>
+<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a>wbt.wetness_index(</span>
+<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a>    sca<span class="op">=</span><span class="st">"sca_dinf.tif"</span>,</span>
+<span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a>    slope<span class="op">=</span><span class="st">"slope_deg.tif"</span>,</span>
+<span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a>    output<span class="op">=</span><span class="st">"twi_dinf.tif"</span></span>
+<span id="cb3-31"><a href="#cb3-31" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="コピー" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Pysheds は教育用・中規模処理には非常に便利だが、公式の中心は D8 である。したがって、<strong>pysheds は flowdir/accumulation/catchment に使い、TWI は別に用意した slope raster と numpy で合成する</strong>のが現実的だ。</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pysheds.grid <span class="im">import</span> Grid</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> rasterio</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>grid <span class="op">=</span> Grid.from_raster(<span class="st">"dem.tif"</span>)</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>dem <span class="op">=</span> grid.read_raster(<span class="st">"dem.tif"</span>)</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a><span class="co"># 前処理</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>pit_filled <span class="op">=</span> grid.fill_pits(dem)</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>dep_filled <span class="op">=</span> grid.fill_depressions(pit_filled)</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>inflated   <span class="op">=</span> grid.resolve_flats(dep_filled)</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a><span class="co"># D8 flow direction &amp; accumulation</span></span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>dirmap <span class="op">=</span> (<span class="dv">64</span>, <span class="dv">128</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">4</span>, <span class="dv">8</span>, <span class="dv">16</span>, <span class="dv">32</span>)</span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>fdir <span class="op">=</span> grid.flowdir(inflated, dirmap<span class="op">=</span>dirmap)</span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>acc  <span class="op">=</span> grid.accumulation(fdir, dirmap<span class="op">=</span>dirmap)</span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a><span class="co"># slope_rad.tif は別途 Whitebox / RichDEM / xrspatial 等で作成しておく</span></span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a><span class="cf">with</span> rasterio.<span class="bu">open</span>(<span class="st">"slope_rad.tif"</span>) <span class="im">as</span> src:</span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>    slope <span class="op">=</span> src.read(<span class="dv">1</span>)</span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>    cellsize <span class="op">=</span> src.res[<span class="dv">0</span>]</span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a><span class="co"># D8近似: pseudo-specific catchment area</span></span>
+<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a>sca <span class="op">=</span> (acc <span class="op">+</span> <span class="fl">1.0</span>) <span class="op">*</span> cellsize</span>
+<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a>twi <span class="op">=</span> np.log(sca <span class="op">/</span> np.maximum(np.tan(slope), <span class="fl">1e-6</span>))</span></code></pre></div><button title="コピー" class="code-copy-button"><i class="bi"></i></button></div>
+<p>QGIS では、TWI は “QGIS native の単独ツール” というより、<strong>Processing 経由で SAGA / GRASS / TauDEM / Whitebox を束ねる</strong>使い方が中心になる。公式 training manual では、DEM から slope と catchment area を作り、その後に TWI を計算するモデルを作る流れが示されている。重要なのは、QGIS チュートリアルでも <strong>slope は radians で計算しなければならない</strong>と明記されている点だ。Model Designer はこの一連のワークフローを単一アルゴリズムとして再利用できる。</p>
+<p>QGIS の実用 GUI 手順は次のように整理できる。まず、DEM を読み込み、必要なら Warp/Reproject で投影をそろえる。次に、SAGA の Fill Sinks または GRASS <code>r.fill.dir</code>、あるいは Whitebox plugin の breach tool で前処理する。その後、SAGA / TauDEM / GRASS で flow accumulation を作成し、SAGA TWI / SWI を使うか、Raster Calculator で <code>ln(SCA / tan(slope))</code> を作る。最後に単一バンド擬似カラーでヒートマップ表示し、等高線や stream network を重ねる。QGIS native slope は degree なので、そのまま <code>tan()</code> に入れるなら radian へ変換する必要がある。</p>
+<p>ArcGIS Pro では、<code>Flow Direction</code> が D8 / MFD / DINF をサポートし、<code>Flow Accumulation</code> がそれに追随する。<code>Slope</code> は従来の 3×3 plane-fit だが、公式にはより新しい <code>Surface Parameters</code> の使用が推奨されている。TWI は専用ツールではなく、通常は <code>Fill</code> → <code>Flow Direction</code> → <code>Flow Accumulation</code> → <code>Slope</code> → <code>Raster Calculator</code> で作る。<code>Tan</code> は radians 入力、<code>Ln</code> は 0 以下を NoData にするので、式は slope units に注意して組む。</p>
+</section>
+<section id="arcgis-pro-の標準式例" class="level3">
+<h3 class="anchored" data-anchor-id="arcgis-pro-の標準式例">ArcGIS Pro の標準式例</h3>
+<p><code>Flow Accumulation</code> が cell count を返す場合、近似的には次のような式になる。</p>
+<pre class="text"><code>Ln( (( "flow_acc" + 1 ) * cellsize ) / Tan("slope_rad") )</code></pre>
+<p>SAGA / GRASS の実装差も押さえておいた方がよい。GRASS <code>r.watershed</code> は <strong>MFD がデフォルト</strong>で、<code>-s</code> フラグで SFD（D8）になる。一方、SAGA は標準 TWI と SAGA Wetness Index が分かれており、parallelizable flow accumulation では D8 / D∞ / MFD と convergence を切り替えられる。QGIS から両者を呼ぶときは、見た目が同じ “wetness” でも中身が違うと理解して選ぶべきだ。</p>
+</section>
+</section>
+<section id="検証計算コスト推奨ワークフロー" class="level2">
+<h2 class="anchored" data-anchor-id="検証計算コスト推奨ワークフロー">検証・計算コスト・推奨ワークフロー</h2>
+<p>TWI の検証で最も強いのは、<strong>現地土壌水分・地下水位・植生データとの照合</strong>である。Sørensen らは土壌水分、地下水位、土壌 pH、植物種数との相関で手法比較を行い、Kopecký らは土壌水分と植物種組成を使ってガイドラインを出した。Riihimäki らは大規模な現地観測で algorithm × resolution の感度を調べ、Winzeler らは長期の土壌体積含水率データで 546 通りの TWI を比較した。森林研究なら、これに加えて <strong>site index、樹高、土壌型、沢からの距離、林床植生指標</strong>を外部基準にできる。</p>
+<p>統計的には、単純相関だけで終わらせない方がよい。空間自己相関の強い森林プロットデータでは、通常の random CV だけだと過大評価になりやすいので、<strong>空間ブロック化した cross-validation</strong>、解像度・flow algorithm・平滑化・閾値を変えた感度分析、さらに地形指標群の共線性評価を併用するのが望ましい。これは文献に即した推奨的判断である。少なくとも、Kopecký、Riihimäki、Winzeler の3系統の結果から、アルゴリズム感度と解像度感度を検証しない TWI 解析は説得力が弱いといえる。</p>
+<p>計算コストは、前処理段階で急増することが多い。ArcGIS の Fill はメモリ・CPU・ディスク負荷が高く、入力 raster の最大 4 倍のディスクを要することがある。GRASS <code>r.watershed</code> は RAM mode と disk-swap mode を持ち、RAM mode では 100 万セルあたり最大 31 MB が目安とされる。SAGA には parallelizable flow accumulation があり、WhiteboxTools も多くのツールで並列実行を前提としている。xarray-spatial は Dask/CuPy backend によるスケーリングを前面に出している。</p>
+<p>大規模領域では、四つの戦略が現実的である。第一に、<strong>COG/GeoTIFF + tile 処理</strong>で前処理と傾斜計算を分割する。第二に、ArcGIS なら Parallel Processing Factor を設定し、必要なら Raster Analysis を image service ベースで回す。第三に、GRASS は region 設定と mask で対象範囲を絞り、必要なら <code>-m</code> で disk mode に落とす。第四に、Python なら <code>rioxarray</code> / <code>xarray-spatial</code> / Dask を併用し、クラウドストレージ上の COG を lazily 読む。</p>
+<p>可視化は単なる見栄えではなく、結果の妥当性確認にも使う。最低限、<strong>TWI ヒートマップ、等高線・陰影起伏図との重ね合わせ、河道抽出結果との比較、TWI と現地土壌水分/樹高/地下水位の散布図</strong>は作るべきだ。QGIS 教材でも単一バンド擬似カラーで TWI を可視化し、レイヤスタイルとして保存する流れが紹介されている。森林研究では、谷底だけ極端に飽和して尾根が不自然に切り立つ、あるいは道路・崖・DEM 継ぎ目が高 TWI 線になるなら、前処理や流向法に問題がある可能性が高い。</p>
+<p>推奨ワークフローを用途別にまとめると次のようになる。小規模・高精細の森林斜面なら、<strong>LiDAR DTM → breach/fill 比較 → D∞ と FD8 を比較 → TWI → 現地湿度検証</strong>。広域の森林管理・立地診断なら、<strong>5–10 m DEM → SAGA/GRASS で batch 処理 → TWI と soil/site index を統合</strong>。大規模研究や再現可能解析パイプラインなら、<strong>Whitebox or GRASS/TauDEM backend + R/Python orchestration + Dask/並列 + 感度分析の自動化</strong>が適している。ArcGIS を使うなら ModelBuilder、QGIS を使うなら Model Designer で標準化するのが実務上もっとも効率的だ。</p>
+<p>最後に、森林研究での <strong>よくある誤り</strong>を短く整理する。第一に、地理座標のまま TWI を計算すること。第二に、D8 の flow accumulation cell count を SCA と誤認すること。第三に、slope の degree/radian を取り違えること。第四に、凹地 fill を強くしすぎて森林湿地や林道轍など本物の微地形を消すこと。第五に、アルゴリズム比較なしで TWI を唯一の湿潤指標として解釈すること。これらは、ほぼすべて公式ドキュメントと比較研究が繰り返し示している落とし穴である。</p>
+</section>
+<section id="参考文献と公式ドキュメント" class="level2">
+<h2 class="anchored" data-anchor-id="参考文献と公式ドキュメント">参考文献と公式ドキュメント</h2>
+<section id="主要論文" class="level3">
+<h3 class="anchored" data-anchor-id="主要論文">主要論文</h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>文献</th>
+<th>種別</th>
+<th>入手先</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Beven, K. J., &amp; Kirkby, M. J. 1979. <em>A physically based, variable contributing area model of basin hydrology</em>.</td>
+<td>原著</td>
+<td>DOI 10.1080/02626667909491834</td>
+</tr>
+<tr class="even">
+<td>Moore, I. D., Grayson, R. B., &amp; Ladson, A. R. 1991. <em>Digital terrain modelling: a review of hydrological, geomorphological, and biological applications</em>.</td>
+<td>レビュー</td>
+<td>DOI 10.1002/hyp.3360050103</td>
+</tr>
+<tr class="odd">
+<td>Sørensen, R., Zinko, U., &amp; Seibert, J. 2006. <em>On the calculation of the topographic wetness index</em>.</td>
+<td>原著</td>
+<td>DOI 10.5194/hess-10-101-2006</td>
+</tr>
+<tr class="even">
+<td>Tarboton, D. G. 1997. <em>A New Method for the Determination of Flow Directions and Contributing Areas in Grid DEMs</em>.</td>
+<td>原著</td>
+<td>DOI 10.1029/96WR03137</td>
+</tr>
+<tr class="odd">
+<td>Holmgren, P. 1994. <em>Multiple flow direction algorithms for runoff modelling in grid based elevation models</em>.</td>
+<td>原著</td>
+<td>DOI 10.1002/hyp.3360080405</td>
+</tr>
+<tr class="even">
+<td>Qin, C.-Z. et al.&nbsp;2007. <em>An adaptive approach to selecting a flow-partition exponent for a multiple-flow-direction algorithm</em>.</td>
+<td>原著</td>
+<td>DOI 10.1080/13658810601073240</td>
+</tr>
+<tr class="odd">
+<td>Seibert, J., &amp; McGlynn, B. L. 2007. <em>A new triangular multiple flow direction algorithm for computing upslope areas</em>.</td>
+<td>原著</td>
+<td>DOI 10.1029/2006WR005128</td>
+</tr>
+<tr class="even">
+<td>Kopecký, M., &amp; Čížková, Š. 2010. <em>Using topographic wetness index in vegetation ecology: does the algorithm matter?</em></td>
+<td>原著</td>
+<td>DOI 10.1111/j.1654-109X.2010.01083.x</td>
+</tr>
+<tr class="odd">
+<td>Kopecký, M., Macek, M., &amp; Wild, J. 2021. <em>Topographic Wetness Index calculation guidelines based on measured soil moisture and plant species composition</em>.</td>
+<td>ガイドライン論文</td>
+<td>DOI 10.1016/j.scitotenv.2020.143785</td>
+</tr>
+<tr class="even">
+<td>Riihimäki, H. et al.&nbsp;2021. <em>Topographic Wetness Index as a Proxy for Soil Moisture: The Importance of Flow-Routing Algorithm and Grid Resolution</em>.</td>
+<td>原著</td>
+<td>DOI 10.1029/2021WR029871</td>
+</tr>
+<tr class="odd">
+<td>Winzeler, H. E. et al.&nbsp;2022. <em>Topographic Wetness Index as a Proxy for Soil Moisture in a Hillslope Catena</em>.</td>
+<td>原著</td>
+<td>DOI 10.3390/land11112018</td>
+</tr>
+<tr class="even">
+<td>Rinderer, M. et al.&nbsp;2014. <em>Topographic controls on shallow groundwater levels in a steep, prealpine catchment</em>.</td>
+<td>原著</td>
+<td>DOI 10.1002/2013WR015009</td>
+</tr>
+<tr class="odd">
+<td>Iverson, L. R. et al.&nbsp;1997. <em>A GIS-derived integrated moisture index to predict forest composition and productivity</em>.</td>
+<td>原著</td>
+<td>USDA PDF</td>
+</tr>
+<tr class="even">
+<td>Mitsuda, Y. et al.&nbsp;2007. <em>Predicting the site index of sugi plantations from GIS-derived environmental factors in Miyazaki Prefecture</em>.</td>
+<td>日本関連原著</td>
+<td>抄録・DOIページ</td>
+</tr>
+<tr class="odd">
+<td>Zushi, K. 2006. <em>Spatial distribution of soil carbon and nitrogen storage and site productivity in Japanese cedar stands</em>.</td>
+<td>日本関連原著</td>
+<td>DOIページ</td>
+</tr>
+<tr class="even">
+<td>稲垣昌宏ら 2018. <em>DEMから算出した地形指数と土壌型との関係の全国地域間比較</em>.</td>
+<td>日本語</td>
+<td>J-STAGE</td>
+</tr>
+<tr class="odd">
+<td>森林総研九州 2018. <em>デジタル地形情報を活用した土壌情報の推定に向けて</em>.</td>
+<td>日本語解説</td>
+<td>森林総研PDF</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="主要ツールの公式ドキュメント" class="level3">
+<h3 class="anchored" data-anchor-id="主要ツールの公式ドキュメント">主要ツールの公式ドキュメント</h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>ツール</th>
+<th>重要ページ</th>
+<th>要点</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>GRASS GIS</td>
+<td><code>r.topidx</code>, <code>r.fill.dir</code>, <code>r.watershed</code>, <code>r.topmodel</code></td>
+<td>標準 TWI、sinkless DEM、MFD/SFD、巨大 rasters への対応</td>
+</tr>
+<tr class="even">
+<td>SAGA GIS</td>
+<td>Topographic Wetness Index, SAGA Wetness Index, Flow Width and Specific Catchment Area, Flow Accumulation (Parallelizable)</td>
+<td>標準 TWI と SWI の区別、SCA の明示計算、並列処理</td>
+</tr>
+<tr class="odd">
+<td>TauDEM</td>
+<td>D-Infinity Flow Directions, D-Infinity Contributing Area, QGIS provider docs</td>
+<td>D∞ 系の代表実装</td>
+</tr>
+<tr class="even">
+<td>WhiteboxTools</td>
+<td>WetnessIndex, BreachDepressionsLeastCost, D8/FD8 flow accumulation, Python/R interface docs</td>
+<td>前処理から TWI まで一貫して自動化しやすい</td>
+</tr>
+<tr class="odd">
+<td>ArcGIS Pro</td>
+<td>Flow Direction, Flow Accumulation, Slope, Fill, Raster Calculator, Parallel Processing</td>
+<td>D8/MFD/DINF を GUI・ModelBuilder で運用可能</td>
+</tr>
+<tr class="even">
+<td>QGIS</td>
+<td>Model Designer, hydrological analysis, TWI tutorial, raster terrain analysis</td>
+<td>Processing による SAGA/GRASS/TauDEM の統合</td>
+</tr>
+<tr class="odd">
+<td>R <code>terra</code></td>
+<td><code>terrain()</code> docs</td>
+<td>slope/flowdir の基礎計算と CRS 依存</td>
+</tr>
+<tr class="even">
+<td>R <code>RSAGA</code></td>
+<td><code>rsaga.wetness.index()</code> docs</td>
+<td>SWI の R 呼び出し</td>
+</tr>
+<tr class="odd">
+<td>R <code>whitebox</code></td>
+<td><code>wbt_wetness_index()</code>, package docs</td>
+<td>WhiteboxTools の R frontend</td>
+</tr>
+<tr class="even">
+<td>R <code>topmodel</code></td>
+<td>archived CRAN page, <code>topmodel()</code>, <code>topidx()</code> docs</td>
+<td>理論学習向け、現行では保守に注意</td>
+</tr>
+<tr class="odd">
+<td>Python <code>pysheds</code></td>
+<td>GitHub README / examples</td>
+<td>D8 の前処理・流域解析が簡潔</td>
+</tr>
+<tr class="even">
+<td>Python <code>richdem</code></td>
+<td>Flow Accumulation, Terrain Attributes docs</td>
+<td>高速 terrain analysis と多流向比較</td>
+</tr>
+<tr class="odd">
+<td>Python <code>rasterio</code> / <code>rioxarray</code></td>
+<td>georeferencing, I/O docs</td>
+<td>DEM 入出力と CRS 管理</td>
+</tr>
+<tr class="even">
+<td>Python <code>xarray-spatial</code></td>
+<td>hydrology docs, package overview</td>
+<td>D8/D∞/MFD と Dask/CuPy backend</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="最終的な推奨" class="level3">
+<h3 class="anchored" data-anchor-id="最終的な推奨">最終的な推奨</h3>
+<p>森林研究で TWI を使うなら、まず <strong>「標準 TWI を一度計算して終わり」ではなく、「前処理・flow-routing・解像度の感度を確かめる比較設計」</strong>にするのが最も重要だ。小規模・高解像度では Whitebox/TauDEM/SAGA をバックエンドにした D∞ または MFD 系、小〜中規模の再現可能解析では R なら <code>terra + whitebox</code>、Python なら <code>whitebox + rasterio</code>、GUI 運用なら QGIS Model Designer か ArcGIS ModelBuilder が最もバランスがよい。土壌水分や植生を説明したい場面では、D8 だけで結論を出さず、少なくとも MFD/D∞ と比較するのが安全である。</p>
+
+
+</section>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "コピーしました");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "コピーしました");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/maple60\.github\.io\/dem-twi-r\/");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>
