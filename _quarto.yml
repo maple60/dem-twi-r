@@ -1,0 +1,34 @@
+project:
+  type: website
+  render:
+    - index.qmd
+    - articles/*.qmd
+    - notebooks/*.qmd
+
+website:
+  title: "DEMからTWI/TPIを計算する"
+  navbar:
+    left:
+      - href: index.qmd
+        text: Home
+      - text: Articles
+        menu:
+          - href: articles/twi-review.qmd
+            text: TWI研究レビュー
+          - href: articles/twi-implementation.qmd
+            text: TWIの計算実装
+      - text: Notebooks
+        menu:
+          - href: notebooks/dem_download.qmd
+            text: DEMデータの準備
+          - href: notebooks/twi_test.qmd
+            text: TWI計算ノート
+
+execute:
+  freeze: auto
+
+format:
+  html:
+    lang: ja
+    toc: true
+    theme: cosmo
