@@ -144,7 +144,7 @@
     "href": "index.html#app",
     "title": "DEMからTWI/TPIを計算する",
     "section": "App",
-    "text": "App\nShinyアプリは app/ に置いています。公開する場合は、Quartoサイトとは別に Shiny 向けのホスティングへデプロイし、このページからリンクする想定です。"
+    "text": "App\n通常版のShinyアプリは app/ に置いています。GeoTIFFの読み込み、terra、WhiteboxToolsを使う実処理はローカルまたはShiny向けホスティングで動かす想定です。\n試験的に、ブラウザだけで動く軽量版を Shinylive App として公開します。この版は合成DEMを使ったTWIの概念デモで、実データ処理は行いません。"
   },
   {
     "objectID": "articles/twi-implementation.html",

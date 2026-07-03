@@ -125,6 +125,10 @@ ul.task-list li input[type="checkbox"] {
   </li>  
     </ul>
   </li>
+  <li class="nav-item">
+    <a class="nav-link" href="./app/"> 
+<span class="menu-text">Shinylive App</span></a>
+  </li>  
 </ul>
           </div> <!-- /navcollapse -->
             <div class="quarto-navbar-tools">
@@ -186,7 +190,8 @@ ul.task-list li input[type="checkbox"] {
 </section>
 <section id="app" class="level2">
 <h2 class="anchored" data-anchor-id="app">App</h2>
-<p>Shinyアプリは <code>app/</code> に置いています。公開する場合は、Quartoサイトとは別に Shiny 向けのホスティングへデプロイし、このページからリンクする想定です。</p>
+<p>通常版のShinyアプリは <code>app/</code> に置いています。GeoTIFFの読み込み、<code>terra</code>、WhiteboxToolsを使う実処理はローカルまたはShiny向けホスティングで動かす想定です。</p>
+<p>試験的に、ブラウザだけで動く軽量版を <a href="app/">Shinylive App</a> として公開します。この版は合成DEMを使ったTWIの概念デモで、実データ処理は行いません。</p>
 
 
 </section>
@@ -265,7 +270,7 @@ ul.task-list li input[type="checkbox"] {
     }
       var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
       var mailtoRegex = new RegExp(/^mailto:/);
-        var filterRegex = new RegExp("https:\/\/maple60\.github\.io\/dem-twi-r\/");
+        var filterRegex = new RegExp('/' + window.location.host + '/');
       var isInternal = (href) => {
           return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
       }
