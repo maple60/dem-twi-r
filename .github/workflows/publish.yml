@@ -30,6 +30,9 @@ jobs:
       - name: Restore R dependencies
         run: Rscript -e 'renv::restore(prompt = FALSE)'
 
+      - name: Install deploy-only R dependencies
+        run: Rscript -e 'install.packages("shinylive")'
+
       - name: Install WhiteboxTools
         run: Rscript -e 'whitebox::install_whitebox()'
 
