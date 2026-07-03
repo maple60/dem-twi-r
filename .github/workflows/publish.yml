@@ -22,8 +22,11 @@ jobs:
         with:
           use-public-rspm: true
 
-      - name: Install render dependencies
-        run: Rscript -e 'install.packages(c("knitr", "rmarkdown", "shinylive"))'
+      - name: Restore R dependencies
+        run: Rscript -e 'renv::restore(prompt = FALSE)'
+
+      - name: Install WhiteboxTools
+        run: Rscript -e 'whitebox::install_whitebox()'
 
       - name: Render site
         run: quarto render
