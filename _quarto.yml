@@ -2,21 +2,20 @@ project:
   type: website
   render:
     - index.qmd
-    - articles/*.qmd
     - notebooks/*.qmd
 
 website:
   title: "DEMからTWI/TPIを計算する"
+  repo-url: https://github.com/maple60/dem-twi-r
+  repo-actions: [edit, source, issue]
   navbar:
+    tools: 
+      - icon: github
+        href: https://github.com/maple60/dem-twi-r
+    search: true
     left:
       - href: index.qmd
         text: Home
-      - text: Articles
-        menu:
-          - href: articles/twi-review.qmd
-            text: TWI研究レビュー
-          - href: articles/twi-implementation.qmd
-            text: TWIの計算実装
       - text: Notebooks
         menu:
           - href: notebooks/dem_download.qmd
@@ -27,6 +26,8 @@ website:
             text: 地形位置指数の計算
       - href: app/
         text: Shinylive App
+      - href: https://maple60-dem-terrain-indices-app.share.connect.posit.cloud/
+        text: TWI/TPI計算アプリ
 
 execute:
   freeze: auto
