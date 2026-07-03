@@ -21,8 +21,10 @@ website:
         menu:
           - href: notebooks/dem_download.qmd
             text: DEMデータの準備
-          - href: notebooks/twi_test.qmd
-            text: TWI計算ノート
+          - href: notebooks/topological_wetness_index.qmd
+            text: 地形湿潤指数の計算
+          - href: notebooks/topological_position_index.qmd
+            text: 地形位置指数の計算
       - href: app/
         text: Shinylive App
 
