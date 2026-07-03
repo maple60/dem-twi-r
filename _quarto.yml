@@ -23,6 +23,8 @@ website:
             text: DEMデータの準備
           - href: notebooks/twi_test.qmd
             text: TWI計算ノート
+      - href: app/
+        text: Shinylive App
 
 execute:
   freeze: auto

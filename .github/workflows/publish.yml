@@ -23,11 +23,18 @@ jobs:
           use-public-rspm: true
 
       - name: Install render dependencies
-        run: Rscript -e 'install.packages(c("knitr", "rmarkdown"))'
+        run: Rscript -e 'install.packages(c("knitr", "rmarkdown", "shinylive"))'
+
+      - name: Render site
+        run: quarto render
+
+      - name: Export Shinylive demo
+        run: Rscript scripts/build-shinylive.R app-shinylive _site/app
 
       - name: Render and publish
         uses: quarto-dev/quarto-actions/publish@v2
         with:
           target: gh-pages
+          render: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
