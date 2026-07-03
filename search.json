@@ -95,21 +95,28 @@
     "href": "index.html",
     "title": "DEMからTWI/TPIを計算する",
     "section": "",
-    "text": "このサイトでは、DEM（数値標高モデル）から地形湿潤指数（TWI）や地形位置指数（TPI）をRで計算するための考え方と実装例を整理します。"
+    "text": "このサイトでは、DEM (数値標高モデル)から地形湿潤指数 (Topographic Wetness Index, TWI)や地形位置指数 (Topographic Position Index, TPI)をR実装する方法についてまとめました。"
   },
   {
     "objectID": "index.html#notebooks",
     "href": "index.html#notebooks",
     "title": "DEMからTWI/TPIを計算する",
     "section": "Notebooks",
-    "text": "Notebooks\n\nDEMデータの準備 (未完成)\n地形湿潤指数の計算\n地形位置指数の計算"
+    "text": "Notebooks\nDEMデータの準備からTWI/TPIの計算まで、ノートブックでまとめました。 上部のNotebooksメニューもしくは以下のリンクからアクセスできます。\n\nDEMデータの準備 (未完成)\n地形湿潤指数 (TWI)の計算\n地形位置指数 (TPI)の計算"
   },
   {
     "objectID": "index.html#app",
     "href": "index.html#app",
     "title": "DEMからTWI/TPIを計算する",
     "section": "App",
-    "text": "App\nShinyliveという、静的サイト上でShinyアプリを動かす仕組みを使って、合成DEMによるTWIの概念デモを公開しています。\nWhiteboxToolsをShinyliveで動作させるのはどうやら難しそうだったので、完全なアプリケーションではありません。 自分のDEMやサンプルデータを使ってTWIやTPIを計算するアプリケーションも以下で公開しています。 ご興味があればお試しください。\n\nTWI/TPI計算\n\nこちらのアプリケーションは、Posit connect cloudというホスティングサービス上で動作しています。 コードは以下からご確認いただけます。\n\nmaple60/dem-terrain-indices-app"
+    "text": "App\nShinyliveという、静的サイト上でShinyアプリを動かす仕組みを使って、合成DEMによるTWIの概念デモを公開しています。 ページ上部のShinylive Appもしくは以下のリンクからアクセスできます。\n\nTWIの概念デモ\n\nWhiteboxToolsをShinyliveで動作させるのはどうやら難しそうだったので、完全なアプリケーションではありません。\nまた、自分のDEMやサンプルデータを使ってTWIやTPIを計算するアプリケーションも公開しています。 ご興味があればお試しください。 ページ上部のTWI/TPI計算アプリもしくは以下のリンクからアクセスできます。\n\nTWI/TPI計算\n\nこちらのアプリケーションは、Posit connect cloudというホスティングサービス上で動作しています。 コードは以下からご確認いただけます。\n\nmaple60/dem-terrain-indices-app"
+  },
+  {
+    "objectID": "index.html#その他",
+    "href": "index.html#その他",
+    "title": "DEMからTWI/TPIを計算する",
+    "section": "その他",
+    "text": "その他\nもしコードを閲覧したり、自分で実行したりしたい場合は、右上のGitHubアイコンからリポジトリにアクセスできます。\nまた、本リポジトリでは、Rのパッケージ管理にrenvを使用しています。 リポジトリをクローンした後、Rコンソールで以下のコマンドを実行することで、必要なパッケージをインストールできます。\n# install.packages(\"renv\") # まだインストールしていない場合\nrenv::restore()"
   },
   {
     "objectID": "notebooks/topographic_position_index.html",
