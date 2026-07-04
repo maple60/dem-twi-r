@@ -22,6 +22,8 @@ website:
             text: 地形湿潤指数の計算
           - href: notebooks/topographic_position_index.qmd
             text: 地形位置指数の計算
+          - href: notebooks/topographic_wetness_index_qgis.qmd
+            text: QGISによるTWIとTPIの計算
       - href: app/
         text: Shinylive App
       - href: https://maple60-dem-terrain-indices-app.share.connect.posit.cloud/

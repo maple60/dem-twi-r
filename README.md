@@ -11,8 +11,9 @@ DEM (数値標高モデル) から地形湿潤指数 (Topographic Wetness Index,
 このリポジトリには、DEM データの準備から TWI/TPI の計算までを確認できる Quarto ノートブックと、TWI の概念デモを含めています。
 
 - [DEMデータの準備](notebooks/dem_download.qmd)
-- [地形湿潤指数 (TWI) の計算](notebooks/topographic_wetness_index.qmd)
-- [地形位置指数 (TPI) の計算](notebooks/topographic_position_index.qmd)
+- [Rによる地形湿潤指数 (TWI)の計算](notebooks/topographic_wetness_index.qmd)
+- [Rによる地形位置指数 (TPI)の計算](notebooks/topographic_position_index.qmd)
+- [QGISによるTWIとTPIの計算](notebooks/topographic_wetness_index_qgis.qmd)
 - [Shinylive による TWI の概念デモ](app/)
 
 Shinylive 版は静的サイト上で動く概念デモです。WhiteboxTools を Shinylive 上で動かすことは難しいため、自分の DEM やサンプルデータを使った計算には、別途公開している TWI/TPI 計算アプリを利用してください。
