@@ -1,5 +1,138 @@
 [
   {
+    "objectID": "notebooks/topographic_wetness_index_qgis.html",
+    "href": "notebooks/topographic_wetness_index_qgis.html",
+    "title": "QGISで地形湿潤指数 (TWI) を計算する",
+    "section": "",
+    "text": "QGISで地形湿潤指数 (TWI) を計算する方法を紹介します。 TWIは、地形の湿潤度を評価するための指標であり、流域解析や水文学的研究において重要な役割を果たします。 SAGA GISやGRASS GISなどのツールを使用して計算することもできますが、ここではWhiteboxToolsを使用してQGIS内で直接計算する方法を説明します。"
+  },
+  {
+    "objectID": "notebooks/topographic_wetness_index_qgis.html#demの読み込み",
+    "href": "notebooks/topographic_wetness_index_qgis.html#demの読み込み",
+    "title": "QGISで地形湿潤指数 (TWI) を計算する",
+    "section": "DEMの読み込み",
+    "text": "DEMの読み込み\n\nデータソースマネージャを開きます\n\n\n\n\nデータソースマネージャを開く\n\n\n\n「ラスタ」タブを選択し、DEM (デジタル標高モデル)データを読み込みます。拡張子は.tifが一般的です\n\n\n\n\nDEMを読み込む\n\n\n\n読み込んだDEMがQGISのレイヤーパネルに表示されるので確認します\n必要に応じてレイヤを切り抜きます。「ラスタ」メニューから「抽出」から切り抜くことが可能です\n\n\n\n\nラスタを切り抜く"
+  },
+  {
+    "objectID": "notebooks/topographic_wetness_index_qgis.html#座標系の設定",
+    "href": "notebooks/topographic_wetness_index_qgis.html#座標系の設定",
+    "title": "QGISで地形湿潤指数 (TWI) を計算する",
+    "section": "座標系の設定",
+    "text": "座標系の設定\n\nDEMの座標系を確認します。レイヤを右クリックして「レイヤのCRS」から「レイヤのCRSを設定」を選択します\nm 単位の投影座標系を設定します。日本であれば、JGD2011 平面直角座標系というものがあります。例えば、京都周辺であればEPSG:6674です。日本における平面直角座標系については、国土地理院のページを参照してください。\n\n\n\n\n座標系の設定"
+  },
+  {
+    "objectID": "notebooks/topographic_wetness_index_qgis.html#breaching-depressions",
+    "href": "notebooks/topographic_wetness_index_qgis.html#breaching-depressions",
+    "title": "QGISで地形湿潤指数 (TWI) を計算する",
+    "section": "Breaching Depressions",
+    "text": "Breaching Depressions\nbreaching Depressionsは、DEM内の低地やくぼみを除去する処理です。これにより、流域解析の精度が向上します。 もしこの処理を行わないばあい、小さなくぼみに水が溜まり、流れが途切れたり、方向が不自然になったりすることがあります。\n\nWhitebox Worlflowsのタブの検索窓に「Breach Depressions」と入力します\n\n\n\n\nBreach Depressionsを検索する\n\n\n\n表示された「Breach Depressions Least Cost」をダブルクリックしてツールウィンドウを開きます\n\nMaximum serch distance in cellsは、くぼみを除去する際の最大探索距離をセル単位で指定します。解像度や目的に応じて適切な値を設定します。今回は1 m解像度でしたので、20セルを指定し、周辺20 mの範囲でくぼみを除去するようにしました。\nfill unresolved depression after breachingは、くぼみを除去した後に残った解決されていないくぼみを埋めるかどうかを指定します。今回はチェックを入れました。\n必要に応じて出力ファイルのパスを指定します。今回は指定しませんでした。\n\n\n\n\n\nBreach Depressions Least Cost\n\n\n\n結果を確認します。あまり変化はないことが多いかもしれません。「ラスタ計算機」を使用して、元のDEMと比較することもできます。\n\n\n\n\n元のDEMとの比較"
+  },
+  {
+    "objectID": "notebooks/topographic_wetness_index_qgis.html#流れの方向を計算する",
+    "href": "notebooks/topographic_wetness_index_qgis.html#流れの方向を計算する",
+    "title": "QGISで地形湿潤指数 (TWI) を計算する",
+    "section": "流れの方向を計算する",
+    "text": "流れの方向を計算する\n\n検索窓で「D8 Pointer」と検索し、表示された「D8 Pointer」をダブルクリックしてツールウィンドウを開きます\n\n\n\n\nD8 Pointerを検索する\n\n\n\n基本的にはデフォルトのままで、実行をクリックします。出力ファイルのパスを指定することもできます。\n結果を確認します。流れの方向が示されたラスタが生成されます。\n\n\n\n\n流れの方向の確認\n\n\n\n\n\n\n\n\nノート\n\n\n\n今回はD8アルゴリズムを使用しましたが、D∞アルゴリズムやFDアルゴリズムなどを使用することもできます。"
+  },
+  {
+    "objectID": "notebooks/topographic_wetness_index_qgis.html#流域蓄積の計算",
+    "href": "notebooks/topographic_wetness_index_qgis.html#流域蓄積の計算",
+    "title": "QGISで地形湿潤指数 (TWI) を計算する",
+    "section": "流域蓄積の計算",
+    "text": "流域蓄積の計算\n\n検索窓で「D8 Flow Accumulation」と検索し、表示された「D8 Flow Accumulation」をダブルクリックしてツールウィンドウを開きます\n\n\n\n\nD8 Flow Accumulationを検索する\n\n\n\nInput DEMは先ほど出力したD8 Pointerを指定します。\nOutput typeはscaを選択します。scaは流域蓄積の値をセル単位で計算する方法です。scaはSpecific Catchment Areaの略で、単位幅あたりの集水面積を表します。\nTreat input as D8 pointer rasterにチェックを入れます。これにより、入力がD8 Pointerラスタであることを指定します。\n実行し、結果を確認します。\n\n\n\n\n流域蓄積の確認"
+  },
+  {
+    "objectID": "notebooks/topographic_wetness_index_qgis.html#傾斜の計算",
+    "href": "notebooks/topographic_wetness_index_qgis.html#傾斜の計算",
+    "title": "QGISで地形湿潤指数 (TWI) を計算する",
+    "section": "傾斜の計算",
+    "text": "傾斜の計算\n\n検索窓で「Slope」と検索し、表示された「Slope」をダブルクリックしてツールウィンドウを開きます\n\n\n\n\nSlopeを検索する\n\n\n\nInput DEMはbreaching depressionを実行したDEMを指定します。\nOutput unitはdegreeを選択します。傾斜の単位を度に設定します。\nZ conversion factorは1.0もしくは未設定にします。これはDEMの垂直単位が水平単位と同じである場合に使用します。もしDEMの垂直単位が異なる場合は、適切な変換係数を設定してください。\n\n\n\n\n傾斜の計算\n\n\n\n実行し、結果を確認します。\n\n\n\n\n傾斜の確認"
+  },
+  {
+    "objectID": "notebooks/topographic_wetness_index_qgis.html#地形湿潤指数-twiの計算",
+    "href": "notebooks/topographic_wetness_index_qgis.html#地形湿潤指数-twiの計算",
+    "title": "QGISで地形湿潤指数 (TWI) を計算する",
+    "section": "地形湿潤指数 (TWI)の計算",
+    "text": "地形湿潤指数 (TWI)の計算\n\n検索窓で「Wetness Index」と検索し、表示された「Wetness Index」をダブルクリックしてツールウィンドウを開きます\n\n\n\n\nWetness Indexを検索する\n\n\n\nSpecific catchment area rasterは、先ほど計算した流域蓄積のラスタを指定します。\nSlope rasterは、先ほど計算した傾斜のラスタを指定します。\n\n\n\n\nWetness Indexの計算\n\n\n\n実行し、結果を確認します。TWIのラスタが生成されます。\n\n\n\n\nTWIの確認"
+  },
+  {
+    "objectID": "notebooks/topographic_wetness_index_qgis.html#任意結果を見やすくする",
+    "href": "notebooks/topographic_wetness_index_qgis.html#任意結果を見やすくする",
+    "title": "QGISで地形湿潤指数 (TWI) を計算する",
+    "section": "(任意)結果を見やすくする",
+    "text": "(任意)結果を見やすくする\nデフォルトではカラースケールがグレーで表示されることが多いです。TWIの値を視覚的にわかりやすくするために、カラースケールを変更することができます。\n\nレイヤを右クリックし、「プロパティ」を選択します\n「シンポロジ」タブで以下のように設定します\n\nレンダリングタイプを：単バンド疑似カラー\n補完方法：線形\nカラーランプ: 任意のカラーランプ。今回はViridisを選択しました\n\n\n\n\n\nシンポロジの設定\n\n\n\n適用をクリックすると、TWIの値が色で表現され、視覚的にわかりやすくなります\n\n\n\n\nカラースケールの変更"
+  },
+  {
+    "objectID": "notebooks/topographic_wetness_index_qgis.html#おまけ地形位置指標-tpiの計算",
+    "href": "notebooks/topographic_wetness_index_qgis.html#おまけ地形位置指標-tpiの計算",
+    "title": "QGISで地形湿潤指数 (TWI) を計算する",
+    "section": "(おまけ)地形位置指標 (TPI)の計算",
+    "text": "(おまけ)地形位置指標 (TPI)の計算\n地形位置指標は、地形の凸凹や位置を評価するための指標です。TPIは、周囲の標高との差を計算することで、地形の特徴を把握することができます。\n\n検索窓で「Difference From Mean Elevation」を検索し、表示された「Difference From Mean Elevation」をダブルクリックしてツールウィンドウを開きます\n\n\n\n\nDifference From Mean Elevationを検索する\n\n\n\nInput DEMは、元のDEMを指定します。\nOdd filter width in cellsは、横方向のセル数を指定します。今回はデフォルトの11セルを指定しました。DEMの解像度や目的に応じて適切な値を設定する必要があります。\nOdd filter height in cellsも同様に、縦方向のセル数を指定します。今回はデフォルトの11セルを指定しました。基本的には、横方向と縦方向のセル数は同じ値を指定することが多いと思います。\n\n\n\n\nDifference From Mean Elevationの設定\n\n\n\n実行し、結果を確認します。TPIのラスタが生成されます。\n\n\n\n\nTPIの確認"
+  },
+  {
+    "objectID": "notebooks/topographic_position_index.html",
+    "href": "notebooks/topographic_position_index.html",
+    "title": "地形位置指数の計算",
+    "section": "",
+    "text": "地形位置指数 (Topological Position Index, TPI) は、地形の局所的な位置を定量化するための指標です。 TPIは、対象となる地点の標高と、その周囲の標高の平均値との差を計算することで求められます。正の値はその地点が周囲よりも高いことを示し、負の値は低いことを示します。\n\\[\nTPI = 標高 - 周辺セルの平均標高\n\\]\nRのterraパッケージを使用して、DEM (Digital Elevation Model) からTPIを計算してみます。\nデータは、whiteboxパッケージのサンプルデータを使用します。\n\n# install.packages(\"terra\") # まだインストールしていない場合\n# renv::install(\"terra\") # renvを使用している場合\n# install.packages(\"whitebox\") # まだインストールしていない場合\n# renv::install(\"whitebox\") # renvを使用している場合\nlibrary(terra)\n\nterra 1.9.34\n\nlibrary(whitebox)\n\ndem_path &lt;- sample_dem_data()\ndem &lt;- rast(dem_path)\nplot(dem)\n\n\n\n\n\n\n\n\nある標高に対して、どの程度の周辺セルを参照するかを決めたうえで、terrain::focal()関数を使用して、周辺セルの平均標高を計算します。ここでは、3x3のウィンドウを使用して周辺セルの平均を計算します。\n\nw &lt;- matrix(1, nrow = 3, ncol = 3) # 3x3のウィンドウ\nw[2, 2] &lt;- NA # 中心セルは周辺平均から除外\n\nmean_neigh &lt;- focal(\n  dem,\n  w = w,\n  fun = mean,\n  na.rm = TRUE\n)\n\ntpi_3_3 &lt;- dem - mean_neigh\nplot(tpi_3_3, main = \"TPI (3x3)\")\n\n\n\n\n\n\n\n\n解釈は以下のようになります。\n\n\n\nTPI\n意味\n\n\n\n\n正\n周囲より高い。尾根・凸地形寄り\n\n\n0付近\n周囲と同程度\n\n\n負\n周囲より低い。谷・凹地形寄り\n\n\n\nどの規模でTPIを計算するかは、解析の目的に応じて決定する必要がありそうです。"
+  },
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "DEMからTWI/TPIを計算する",
+    "section": "",
+    "text": "このサイトでは、DEM (数値標高モデル)から地形湿潤指数 (Topographic Wetness Index, TWI)や地形位置指数 (Topographic Position Index, TPI)をR実装する方法についてまとめました。"
+  },
+  {
+    "objectID": "index.html#notebooks",
+    "href": "index.html#notebooks",
+    "title": "DEMからTWI/TPIを計算する",
+    "section": "Notebooks",
+    "text": "Notebooks\nDEMデータの準備からTWI/TPIの計算まで、ノートブックでまとめました。 上部のNotebooksメニューもしくは以下のリンクからアクセスできます。\n\nDEMデータの準備 (未完成)\n地形湿潤指数 (TWI)の計算\n地形位置指数 (TPI)の計算"
+  },
+  {
+    "objectID": "index.html#app",
+    "href": "index.html#app",
+    "title": "DEMからTWI/TPIを計算する",
+    "section": "App",
+    "text": "App\nShinyliveという、静的サイト上でShinyアプリを動かす仕組みを使って、合成DEMによるTWIの概念デモを公開しています。 ページ上部のShinylive Appもしくは以下のリンクからアクセスできます。\n\nTWIの概念デモ\n\nWhiteboxToolsをShinyliveで動作させるのはどうやら難しそうだったので、完全なアプリケーションではありません。\nまた、自分のDEMやサンプルデータを使ってTWIやTPIを計算するアプリケーションも公開しています。 ご興味があればお試しください。 ページ上部のTWI/TPI計算アプリもしくは以下のリンクからアクセスできます。\n\nTWI/TPI計算\n\nこちらのアプリケーションは、Posit connect cloudというホスティングサービス上で動作しています。 コードは以下からご確認いただけます。\n\nmaple60/dem-terrain-indices-app"
+  },
+  {
+    "objectID": "index.html#その他",
+    "href": "index.html#その他",
+    "title": "DEMからTWI/TPIを計算する",
+    "section": "その他",
+    "text": "その他\nもしコードを閲覧したり、自分で実行したりしたい場合は、右上のGitHubアイコンからリポジトリにアクセスできます。\nまた、本リポジトリでは、Rのパッケージ管理にrenvを使用しています。 リポジトリをクローンした後、Rコンソールで以下のコマンドを実行することで、必要なパッケージをインストールできます。\n# install.packages(\"renv\") # まだインストールしていない場合\nrenv::restore()"
+  },
+  {
+    "objectID": "notebooks/dem_download.html",
+    "href": "notebooks/dem_download.html",
+    "title": "DEMデータの準備",
+    "section": "",
+    "text": "国土地理院の基盤地図情報ダウンロードサービスから、DEM（数値標高モデル）を取得します。\n\n基盤地図情報ダウンロードサービス\n\n座標参照系が「JGD2011」から「JGD2024」に変更となっているらしい。\n1次メッシュごとに選択なので、以下のサイトなどを参考にしながら、必要な範囲の2次メッシュを特定すると、ダウンロードデータを最小限にできます。\n\n電子地形図（2次メッシュ定型版）刊行範囲 | 国土地理院"
+  },
+  {
+    "objectID": "notebooks/dem_download.html#ダウンロード",
+    "href": "notebooks/dem_download.html#ダウンロード",
+    "title": "DEMデータの準備",
+    "section": "",
+    "text": "国土地理院の基盤地図情報ダウンロードサービスから、DEM（数値標高モデル）を取得します。\n\n基盤地図情報ダウンロードサービス\n\n座標参照系が「JGD2011」から「JGD2024」に変更となっているらしい。\n1次メッシュごとに選択なので、以下のサイトなどを参考にしながら、必要な範囲の2次メッシュを特定すると、ダウンロードデータを最小限にできます。\n\n電子地形図（2次メッシュ定型版）刊行範囲 | 国土地理院"
+  },
+  {
+    "objectID": "notebooks/dem_download.html#tif形式への変換",
+    "href": "notebooks/dem_download.html#tif形式への変換",
+    "title": "DEMデータの準備",
+    "section": "tif形式への変換",
+    "text": "tif形式への変換\n基盤地図情報ダウンロードサービスのデータはzipファイルで提供されており、展開すると、xmlファイルが含まれています。\n扱いやすくするために、geotiff形式（.tif）に変換します。 もっとも簡単な方法は、QGISのQuickDEM4JPプラグインを使うことです。\nこれにより、簡単にtif形式のDEMを作成できます。"
+  },
+  {
+    "objectID": "notebooks/dem_download.html#トリミング",
+    "href": "notebooks/dem_download.html#トリミング",
+    "title": "DEMデータの準備",
+    "section": "トリミング",
+    "text": "トリミング\nそのままだと大きすぎる場合は、whiteboxのclip_raster関数を使って、必要な範囲にトリミングします。\nもしGUIで操作したい場合は、WhiteboxTools GUIを使うと便利です。\nまた、QGISでトリミング"
+  },
+  {
     "objectID": "notebooks/topographic_wetness_index.html",
     "href": "notebooks/topographic_wetness_index.html",
     "title": "地形湿潤指数の計算",
@@ -61,68 +194,5 @@
     "title": "地形湿潤指数の計算",
     "section": "TWI (Topographic Wetness Index)",
     "text": "TWI (Topographic Wetness Index)\nTWIを計算するには、wbt_wetness_index()関数を使用します。この関数は、流域の蓄積量と傾斜を入力として受け取り、TWIを計算します。\n\nwbt_wetness_index(\n  sca = file.path(output_dir, \"d8_accum.tif\"),\n  slope = file.path(output_dir, \"d8_slope.tif\"),\n  output = file.path(output_dir, \"d8_twi.tif\")\n)\ntwi &lt;- rast(file.path(output_dir, \"d8_twi.tif\"))\n\nplot(twi, axes = FALSE, main = \"TWI (Topographic Wetness Index)\")"
-  },
-  {
-    "objectID": "notebooks/dem_download.html",
-    "href": "notebooks/dem_download.html",
-    "title": "DEMデータの準備",
-    "section": "",
-    "text": "国土地理院の基盤地図情報ダウンロードサービスから、DEM（数値標高モデル）を取得します。\n\n基盤地図情報ダウンロードサービス\n\n座標参照系が「JGD2011」から「JGD2024」に変更となっているらしい。\n1次メッシュごとに選択なので、以下のサイトなどを参考にしながら、必要な範囲の2次メッシュを特定すると、ダウンロードデータを最小限にできます。\n\n電子地形図（2次メッシュ定型版）刊行範囲 | 国土地理院"
-  },
-  {
-    "objectID": "notebooks/dem_download.html#ダウンロード",
-    "href": "notebooks/dem_download.html#ダウンロード",
-    "title": "DEMデータの準備",
-    "section": "",
-    "text": "国土地理院の基盤地図情報ダウンロードサービスから、DEM（数値標高モデル）を取得します。\n\n基盤地図情報ダウンロードサービス\n\n座標参照系が「JGD2011」から「JGD2024」に変更となっているらしい。\n1次メッシュごとに選択なので、以下のサイトなどを参考にしながら、必要な範囲の2次メッシュを特定すると、ダウンロードデータを最小限にできます。\n\n電子地形図（2次メッシュ定型版）刊行範囲 | 国土地理院"
-  },
-  {
-    "objectID": "notebooks/dem_download.html#tif形式への変換",
-    "href": "notebooks/dem_download.html#tif形式への変換",
-    "title": "DEMデータの準備",
-    "section": "tif形式への変換",
-    "text": "tif形式への変換\n基盤地図情報ダウンロードサービスのデータはzipファイルで提供されており、展開すると、xmlファイルが含まれています。\n扱いやすくするために、geotiff形式（.tif）に変換します。 もっとも簡単な方法は、QGISのQuickDEM4JPプラグインを使うことです。\nこれにより、簡単にtif形式のDEMを作成できます。"
-  },
-  {
-    "objectID": "notebooks/dem_download.html#トリミング",
-    "href": "notebooks/dem_download.html#トリミング",
-    "title": "DEMデータの準備",
-    "section": "トリミング",
-    "text": "トリミング\nそのままだと大きすぎる場合は、whiteboxのclip_raster関数を使って、必要な範囲にトリミングします。\nもしGUIで操作したい場合は、WhiteboxTools GUIを使うと便利です。\nまた、QGISでトリミング"
-  },
-  {
-    "objectID": "index.html",
-    "href": "index.html",
-    "title": "DEMからTWI/TPIを計算する",
-    "section": "",
-    "text": "このサイトでは、DEM (数値標高モデル)から地形湿潤指数 (Topographic Wetness Index, TWI)や地形位置指数 (Topographic Position Index, TPI)をR実装する方法についてまとめました。"
-  },
-  {
-    "objectID": "index.html#notebooks",
-    "href": "index.html#notebooks",
-    "title": "DEMからTWI/TPIを計算する",
-    "section": "Notebooks",
-    "text": "Notebooks\nDEMデータの準備からTWI/TPIの計算まで、ノートブックでまとめました。 上部のNotebooksメニューもしくは以下のリンクからアクセスできます。\n\nDEMデータの準備 (未完成)\n地形湿潤指数 (TWI)の計算\n地形位置指数 (TPI)の計算"
-  },
-  {
-    "objectID": "index.html#app",
-    "href": "index.html#app",
-    "title": "DEMからTWI/TPIを計算する",
-    "section": "App",
-    "text": "App\nShinyliveという、静的サイト上でShinyアプリを動かす仕組みを使って、合成DEMによるTWIの概念デモを公開しています。 ページ上部のShinylive Appもしくは以下のリンクからアクセスできます。\n\nTWIの概念デモ\n\nWhiteboxToolsをShinyliveで動作させるのはどうやら難しそうだったので、完全なアプリケーションではありません。\nまた、自分のDEMやサンプルデータを使ってTWIやTPIを計算するアプリケーションも公開しています。 ご興味があればお試しください。 ページ上部のTWI/TPI計算アプリもしくは以下のリンクからアクセスできます。\n\nTWI/TPI計算\n\nこちらのアプリケーションは、Posit connect cloudというホスティングサービス上で動作しています。 コードは以下からご確認いただけます。\n\nmaple60/dem-terrain-indices-app"
-  },
-  {
-    "objectID": "index.html#その他",
-    "href": "index.html#その他",
-    "title": "DEMからTWI/TPIを計算する",
-    "section": "その他",
-    "text": "その他\nもしコードを閲覧したり、自分で実行したりしたい場合は、右上のGitHubアイコンからリポジトリにアクセスできます。\nまた、本リポジトリでは、Rのパッケージ管理にrenvを使用しています。 リポジトリをクローンした後、Rコンソールで以下のコマンドを実行することで、必要なパッケージをインストールできます。\n# install.packages(\"renv\") # まだインストールしていない場合\nrenv::restore()"
-  },
-  {
-    "objectID": "notebooks/topographic_position_index.html",
-    "href": "notebooks/topographic_position_index.html",
-    "title": "地形位置指数の計算",
-    "section": "",
-    "text": "地形位置指数 (Topological Position Index, TPI) は、地形の局所的な位置を定量化するための指標です。 TPIは、対象となる地点の標高と、その周囲の標高の平均値との差を計算することで求められます。正の値はその地点が周囲よりも高いことを示し、負の値は低いことを示します。\n\\[\nTPI = 標高 - 周辺セルの平均標高\n\\]\nRのterraパッケージを使用して、DEM (Digital Elevation Model) からTPIを計算してみます。\nデータは、whiteboxパッケージのサンプルデータを使用します。\n\n# install.packages(\"terra\") # まだインストールしていない場合\n# renv::install(\"terra\") # renvを使用している場合\n# install.packages(\"whitebox\") # まだインストールしていない場合\n# renv::install(\"whitebox\") # renvを使用している場合\nlibrary(terra)\n\nterra 1.9.34\n\nlibrary(whitebox)\n\ndem_path &lt;- sample_dem_data()\ndem &lt;- rast(dem_path)\nplot(dem)\n\n\n\n\n\n\n\n\nある標高に対して、どの程度の周辺セルを参照するかを決めたうえで、terrain::focal()関数を使用して、周辺セルの平均標高を計算します。ここでは、3x3のウィンドウを使用して周辺セルの平均を計算します。\n\nw &lt;- matrix(1, nrow = 3, ncol = 3) # 3x3のウィンドウ\nw[2, 2] &lt;- NA # 中心セルは周辺平均から除外\n\nmean_neigh &lt;- focal(\n  dem,\n  w = w,\n  fun = mean,\n  na.rm = TRUE\n)\n\ntpi_3_3 &lt;- dem - mean_neigh\nplot(tpi_3_3, main = \"TPI (3x3)\")\n\n\n\n\n\n\n\n\n解釈は以下のようになります。\n\n\n\nTPI\n意味\n\n\n\n\n正\n周囲より高い。尾根・凸地形寄り\n\n\n0付近\n周囲と同程度\n\n\n負\n周囲より低い。谷・凹地形寄り\n\n\n\nどの規模でTPIを計算するかは、解析の目的に応じて決定する必要がありそうです。"
   }
 ]

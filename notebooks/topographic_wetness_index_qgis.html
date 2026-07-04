@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ja" xml:lang="ja"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.38">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>QGISで地形湿潤指数 (TWI) を計算する – DEMからTWI/TPIを計算する</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-15634bcf2e68342d4ad2dfa704d543f6.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-bba5ebae505b5c03f3f0d8040a416a6b.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script src="../site_libs/quarto-contrib/glightbox/glightbox.min.js"></script>
+<link href="../site_libs/quarto-contrib/glightbox/glightbox.min.css" rel="stylesheet">
+<link href="../site_libs/quarto-contrib/glightbox/lightbox.css" rel="stylesheet">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "一致なし",
+    "search-matching-documents-text": "一致した文書",
+    "search-copy-link-title": "検索へのリンクをコピー",
+    "search-hide-matches-text": "追加の検索結果を非表示",
+    "search-more-match-text": "追加の検索結果",
+    "search-more-matches-text": "追加の検索結果",
+    "search-clear-button-title": "消去",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "取消",
+    "search-submit-button-title": "検索",
+    "search-label": "サーチ"
+  }
+}</script>
+
+
+</head>
+
+<body class="nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="../index.html">
+    <span class="navbar-title">DEMからTWI/TPIを計算する</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="サーチ"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="ナビゲーションを切り替える" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../index.html"> 
+<span class="menu-text">Home</span></a>
+  </li>  
+  <li class="nav-item dropdown ">
+    <a class="nav-link dropdown-toggle" href="#" id="nav-menu-notebooks" role="link" data-bs-toggle="dropdown" aria-expanded="false">
+ <span class="menu-text">Notebooks</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="nav-menu-notebooks">    
+        <li>
+    <a class="dropdown-item" href="../notebooks/dem_download.html">
+ <span class="dropdown-text">DEMデータの準備</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../notebooks/topographic_wetness_index.html">
+ <span class="dropdown-text">地形湿潤指数の計算</span></a>
+  </li>  
+        <li>
+    <a class="dropdown-item" href="../notebooks/topographic_position_index.html">
+ <span class="dropdown-text">地形位置指数の計算</span></a>
+  </li>  
+    </ul>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link" href="../app/"> 
+<span class="menu-text">Shinylive App</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="https://maple60-dem-terrain-indices-app.share.connect.posit.cloud/"> 
+<span class="menu-text">TWI/TPI計算アプリ</span></a>
+  </li>  
+</ul>
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item compact">
+    <a class="nav-link" href="https://github.com/maple60/dem-twi-r"> <i class="bi bi-github" role="img" aria-label="GitHub">
+</i> 
+<span class="menu-text"></span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">目次</h2>
+   
+  <ul>
+  <li><a href="#demの読み込み" id="toc-demの読み込み" class="nav-link active" data-scroll-target="#demの読み込み">DEMの読み込み</a></li>
+  <li><a href="#座標系の設定" id="toc-座標系の設定" class="nav-link" data-scroll-target="#座標系の設定">座標系の設定</a></li>
+  <li><a href="#breaching-depressions" id="toc-breaching-depressions" class="nav-link" data-scroll-target="#breaching-depressions">Breaching Depressions</a></li>
+  <li><a href="#流れの方向を計算する" id="toc-流れの方向を計算する" class="nav-link" data-scroll-target="#流れの方向を計算する">流れの方向を計算する</a></li>
+  <li><a href="#流域蓄積の計算" id="toc-流域蓄積の計算" class="nav-link" data-scroll-target="#流域蓄積の計算">流域蓄積の計算</a></li>
+  <li><a href="#傾斜の計算" id="toc-傾斜の計算" class="nav-link" data-scroll-target="#傾斜の計算">傾斜の計算</a></li>
+  <li><a href="#地形湿潤指数-twiの計算" id="toc-地形湿潤指数-twiの計算" class="nav-link" data-scroll-target="#地形湿潤指数-twiの計算">地形湿潤指数 (TWI)の計算</a></li>
+  <li><a href="#任意結果を見やすくする" id="toc-任意結果を見やすくする" class="nav-link" data-scroll-target="#任意結果を見やすくする">(任意)結果を見やすくする</a></li>
+  <li><a href="#おまけ地形位置指標-tpiの計算" id="toc-おまけ地形位置指標-tpiの計算" class="nav-link" data-scroll-target="#おまけ地形位置指標-tpiの計算">(おまけ)地形位置指標 (TPI)の計算</a></li>
+  </ul>
+<div class="toc-actions"><ul><li><a href="https://github.com/maple60/dem-twi-r/edit/main/notebooks/topographic_wetness_index_qgis.qmd" class="toc-action"><i class="bi bi-github"></i>編集</a></li><li><a href="https://github.com/maple60/dem-twi-r/blob/main/notebooks/topographic_wetness_index_qgis.qmd" class="toc-action"><i class="bi empty"></i>ソースコード</a></li><li><a href="https://github.com/maple60/dem-twi-r/issues/new" class="toc-action"><i class="bi empty"></i>問題を報告</a></li></ul></div></nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">QGISで地形湿潤指数 (TWI) を計算する</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<p>QGISで地形湿潤指数 (TWI) を計算する方法を紹介します。 TWIは、地形の湿潤度を評価するための指標であり、流域解析や水文学的研究において重要な役割を果たします。 SAGA GISやGRASS GISなどのツールを使用して計算することもできますが、ここではWhiteboxToolsを使用してQGIS内で直接計算する方法を説明します。</p>
+<section id="demの読み込み" class="level2">
+<h2 class="anchored" data-anchor-id="demの読み込み">DEMの読み込み</h2>
+<ul>
+<li>データソースマネージャを開きます</li>
+</ul>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><a href="assets/open_data_source_manager.webp" class="lightbox" data-gallery="quarto-lightbox-gallery-1" title="データソースマネージャを開く"><img src="assets/open_data_source_manager.webp" class="img-fluid figure-img" alt="データソースマネージャを開く"></a></p>
+<figcaption>データソースマネージャを開く</figcaption>
+</figure>
+</div>
+<ul>
+<li>「ラスタ」タブを選択し、DEM (デジタル標高モデル)データを読み込みます。拡張子は<code>.tif</code>が一般的です</li>
+</ul>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><a href="assets/add_raster_layer.webp" class="lightbox" data-gallery="quarto-lightbox-gallery-2" title="DEMを読み込む"><img src="assets/add_raster_layer.webp" class="img-fluid figure-img" alt="DEMを読み込む"></a></p>
+<figcaption>DEMを読み込む</figcaption>
+</figure>
+</div>
+<ul>
+<li><p>読み込んだDEMがQGISのレイヤーパネルに表示されるので確認します</p></li>
+<li><p>必要に応じてレイヤを切り抜きます。「ラスタ」メニューから「抽出」から切り抜くことが可能です</p></li>
+</ul>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><a href="assets/clip_raster.webp" class="lightbox" data-gallery="quarto-lightbox-gallery-3" title="ラスタを切り抜く"><img src="assets/clip_raster.webp" class="img-fluid figure-img" alt="ラスタを切り抜く"></a></p>
+<figcaption>ラスタを切り抜く</figcaption>
+</figure>
+</div>
+</section>
+<section id="座標系の設定" class="level2">
+<h2 class="anchored" data-anchor-id="座標系の設定">座標系の設定</h2>
+<ul>
+<li>DEMの座標系を確認します。レイヤを右クリックして「レイヤのCRS」から「レイヤのCRSを設定」を選択します</li>
+<li><strong>m 単位の投影座標系</strong>を設定します。日本であれば、<strong>JGD2011 平面直角座標系</strong>というものがあります。例えば、京都周辺であればEPSG:6674です。日本における平面直角座標系については、<a href="https://www.gsi.go.jp/LAW/heimencho.html">国土地理院のページ</a>を参照してください。</li>
+</ul>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><a href="assets/set_crs.webp" class="lightbox" data-gallery="quarto-lightbox-gallery-4" title="座標系の設定"><img src="assets/set_crs.webp" class="img-fluid figure-img" alt="座標系の設定"></a></p>
+<figcaption>座標系の設定</figcaption>
+</figure>
+</div>
+</section>
+<section id="breaching-depressions" class="level2">
+<h2 class="anchored" data-anchor-id="breaching-depressions">Breaching Depressions</h2>
+<p>breaching Depressionsは、DEM内の低地やくぼみを除去する処理です。これにより、流域解析の精度が向上します。 もしこの処理を行わないばあい、小さなくぼみに水が溜まり、流れが途切れたり、方向が不自然になったりすることがあります。</p>
+<ul>
+<li>Whitebox Worlflowsのタブの検索窓に「Breach Depressions」と入力します</li>
+</ul>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><a href="assets/select_breaching_depression.webp" class="lightbox" data-gallery="quarto-lightbox-gallery-5" title="Breach Depressionsを検索する"><img src="assets/select_breaching_depression.webp" class="img-fluid figure-img" alt="Breach Depressionsを検索する"></a></p>
+<figcaption>Breach Depressionsを検索する</figcaption>
+</figure>
+</div>
+<ul>
+<li>表示された「<strong>Breach Depressions Least Cost</strong>」をダブルクリックしてツールウィンドウを開きます
+<ul>
+<li><strong>Maximum serch distance in cells</strong>は、くぼみを除去する際の最大探索距離をセル単位で指定します。解像度や目的に応じて適切な値を設定します。今回は1 m解像度でしたので、20セルを指定し、周辺20 mの範囲でくぼみを除去するようにしました。</li>
+<li><strong>fill unresolved depression after breaching</strong>は、くぼみを除去した後に残った解決されていないくぼみを埋めるかどうかを指定します。今回はチェックを入れました。</li>
+<li>必要に応じて出力ファイルのパスを指定します。今回は指定しませんでした。</li>
+</ul></li>
+</ul>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><a href="assets/breaching_depression.webp" class="lightbox" data-gallery="quarto-lightbox-gallery-6" title="Breach Depressions Least Cost"><img src="assets/breaching_depression.webp" class="img-fluid figure-img" alt="Breach Depressions Least Cost"></a></p>
+<figcaption>Breach Depressions Least Cost</figcaption>
+</figure>
+</div>
+<ul>
+<li>結果を確認します。あまり変化はないことが多いかもしれません。「ラスタ計算機」を使用して、元のDEMと比較することもできます。</li>
+</ul>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><a href="assets/compare_dem.webp" class="lightbox" data-gallery="quarto-lightbox-gallery-7" title="元のDEMとの比較"><img src="assets/compare_dem.webp" class="img-fluid figure-img" alt="元のDEMとの比較"></a></p>
+<figcaption>元のDEMとの比較</figcaption>
+</figure>
+</div>
+</section>
+<section id="流れの方向を計算する" class="level2">
+<h2 class="anchored" data-anchor-id="流れの方向を計算する">流れの方向を計算する</h2>
+<ul>
+<li>検索窓で「D8 Pointer」と検索し、表示された「<strong>D8 Pointer</strong>」をダブルクリックしてツールウィンドウを開きます</li>
+</ul>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><a href="assets/select_d8_pointer.webp" class="lightbox" data-gallery="quarto-lightbox-gallery-8" title="D8 Pointerを検索する"><img src="assets/select_d8_pointer.webp" class="img-fluid figure-img" alt="D8 Pointerを検索する"></a></p>
+<figcaption>D8 Pointerを検索する</figcaption>
+</figure>
+</div>
+<ul>
+<li><p>基本的にはデフォルトのままで、実行をクリックします。出力ファイルのパスを指定することもできます。</p></li>
+<li><p>結果を確認します。流れの方向が示されたラスタが生成されます。</p></li>
+</ul>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><a href="assets/check_flow_direction.webp" class="lightbox" data-gallery="quarto-lightbox-gallery-9" title="流れの方向の確認"><img src="assets/check_flow_direction.webp" class="img-fluid figure-img" alt="流れの方向の確認"></a></p>
+<figcaption>流れの方向の確認</figcaption>
+</figure>
+</div>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+ノート
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>今回はD8アルゴリズムを使用しましたが、D∞アルゴリズムやFDアルゴリズムなどを使用することもできます。</p>
+</div>
+</div>
+</section>
+<section id="流域蓄積の計算" class="level2">
+<h2 class="anchored" data-anchor-id="流域蓄積の計算">流域蓄積の計算</h2>
+<ul>
+<li>検索窓で「D8 Flow Accumulation」と検索し、表示された「<strong>D8 Flow Accumulation</strong>」をダブルクリックしてツールウィンドウを開きます</li>
+</ul>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><a href="assets/select_d8_flow_accumulation.webp" class="lightbox" data-gallery="quarto-lightbox-gallery-10" title="D8 Flow Accumulationを検索する"><img src="assets/select_d8_flow_accumulation.webp" class="img-fluid figure-img" alt="D8 Flow Accumulationを検索する"></a></p>
+<figcaption>D8 Flow Accumulationを検索する</figcaption>
+</figure>
+</div>
+<ul>
+<li><p>Input DEMは先ほど出力したD8 Pointerを指定します。</p></li>
+<li><p>Output typeはscaを選択します。scaは流域蓄積の値をセル単位で計算する方法です。scaはSpecific Catchment Areaの略で、単位幅あたりの集水面積を表します。</p></li>
+<li><p>Treat input as D8 pointer rasterにチェックを入れます。これにより、入力がD8 Pointerラスタであることを指定します。</p></li>
+<li><p>実行し、結果を確認します。</p></li>
+</ul>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><a href="assets/check_flow_accumulation.webp" class="lightbox" data-gallery="quarto-lightbox-gallery-11" title="流域蓄積の確認"><img src="assets/check_flow_accumulation.webp" class="img-fluid figure-img" alt="流域蓄積の確認"></a></p>
+<figcaption>流域蓄積の確認</figcaption>
+</figure>
+</div>
+</section>
+<section id="傾斜の計算" class="level2">
+<h2 class="anchored" data-anchor-id="傾斜の計算">傾斜の計算</h2>
+<ul>
+<li>検索窓で「Slope」と検索し、表示された「<strong>Slope</strong>」をダブルクリックしてツールウィンドウを開きます</li>
+</ul>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><a href="assets/select_slope.webp" class="lightbox" data-gallery="quarto-lightbox-gallery-12" title="Slopeを検索する"><img src="assets/select_slope.webp" class="img-fluid figure-img" alt="Slopeを検索する"></a></p>
+<figcaption>Slopeを検索する</figcaption>
+</figure>
+</div>
+<ul>
+<li>Input DEMはbreaching depressionを実行したDEMを指定します。</li>
+<li>Output unitはdegreeを選択します。傾斜の単位を度に設定します。</li>
+<li>Z conversion factorは1.0もしくは未設定にします。これはDEMの垂直単位が水平単位と同じである場合に使用します。もしDEMの垂直単位が異なる場合は、適切な変換係数を設定してください。</li>
+</ul>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><a href="assets/slope_calculation.webp" class="lightbox" data-gallery="quarto-lightbox-gallery-13" title="傾斜の計算"><img src="assets/slope_calculation.webp" class="img-fluid figure-img" alt="傾斜の計算"></a></p>
+<figcaption>傾斜の計算</figcaption>
+</figure>
+</div>
+<ul>
+<li>実行し、結果を確認します。</li>
+</ul>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><a href="assets/check_slope.webp" class="lightbox" data-gallery="quarto-lightbox-gallery-14" title="傾斜の確認"><img src="assets/check_slope.webp" class="img-fluid figure-img" alt="傾斜の確認"></a></p>
+<figcaption>傾斜の確認</figcaption>
+</figure>
+</div>
+</section>
+<section id="地形湿潤指数-twiの計算" class="level2">
+<h2 class="anchored" data-anchor-id="地形湿潤指数-twiの計算">地形湿潤指数 (TWI)の計算</h2>
+<ul>
+<li>検索窓で「Wetness Index」と検索し、表示された「<strong>Wetness Index</strong>」をダブルクリックしてツールウィンドウを開きます</li>
+</ul>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><a href="assets/select_wetness_index.webp" class="lightbox" data-gallery="quarto-lightbox-gallery-15" title="Wetness Indexを検索する"><img src="assets/select_wetness_index.webp" class="img-fluid figure-img" alt="Wetness Indexを検索する"></a></p>
+<figcaption>Wetness Indexを検索する</figcaption>
+</figure>
+</div>
+<ul>
+<li>Specific catchment area rasterは、先ほど計算した流域蓄積のラスタを指定します。</li>
+<li>Slope rasterは、先ほど計算した傾斜のラスタを指定します。</li>
+</ul>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><a href="assets/wetness_index_calculation.webp" class="lightbox" data-gallery="quarto-lightbox-gallery-16" title="Wetness Indexの計算"><img src="assets/wetness_index_calculation.webp" class="img-fluid figure-img" alt="Wetness Indexの計算"></a></p>
+<figcaption>Wetness Indexの計算</figcaption>
+</figure>
+</div>
+<ul>
+<li>実行し、結果を確認します。TWIのラスタが生成されます。</li>
+</ul>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><a href="assets/check_twi.webp" class="lightbox" data-gallery="quarto-lightbox-gallery-17" title="TWIの確認"><img src="assets/check_twi.webp" class="img-fluid figure-img" alt="TWIの確認"></a></p>
+<figcaption>TWIの確認</figcaption>
+</figure>
+</div>
+</section>
+<section id="任意結果を見やすくする" class="level2">
+<h2 class="anchored" data-anchor-id="任意結果を見やすくする">(任意)結果を見やすくする</h2>
+<p>デフォルトではカラースケールがグレーで表示されることが多いです。TWIの値を視覚的にわかりやすくするために、カラースケールを変更することができます。</p>
+<ul>
+<li>レイヤを右クリックし、「プロパティ」を選択します</li>
+<li>「シンポロジ」タブで以下のように設定します
+<ul>
+<li>レンダリングタイプを：単バンド疑似カラー</li>
+<li>補完方法：線形</li>
+<li>カラーランプ: 任意のカラーランプ。今回はViridisを選択しました</li>
+</ul></li>
+</ul>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><a href="assets/change_color_scale_setting.webp" class="lightbox" data-gallery="quarto-lightbox-gallery-18" title="シンポロジの設定"><img src="assets/change_color_scale_setting.webp" class="img-fluid figure-img" alt="シンポロジの設定"></a></p>
+<figcaption>シンポロジの設定</figcaption>
+</figure>
+</div>
+<ul>
+<li>適用をクリックすると、TWIの値が色で表現され、視覚的にわかりやすくなります</li>
+</ul>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><a href="assets/change_color_scale.webp" class="lightbox" data-gallery="quarto-lightbox-gallery-19" title="カラースケールの変更"><img src="assets/change_color_scale.webp" class="img-fluid figure-img" alt="カラースケールの変更"></a></p>
+<figcaption>カラースケールの変更</figcaption>
+</figure>
+</div>
+</section>
+<section id="おまけ地形位置指標-tpiの計算" class="level2">
+<h2 class="anchored" data-anchor-id="おまけ地形位置指標-tpiの計算">(おまけ)地形位置指標 (TPI)の計算</h2>
+<p>地形位置指標は、地形の凸凹や位置を評価するための指標です。TPIは、周囲の標高との差を計算することで、地形の特徴を把握することができます。</p>
+<ul>
+<li>検索窓で「Difference From Mean Elevation」を検索し、表示された「<strong>Difference From Mean Elevation</strong>」をダブルクリックしてツールウィンドウを開きます</li>
+</ul>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><a href="assets/select_difference_from_mean_elevation.webp" class="lightbox" data-gallery="quarto-lightbox-gallery-20" title="Difference From Mean Elevationを検索する"><img src="assets/select_difference_from_mean_elevation.webp" class="img-fluid figure-img" alt="Difference From Mean Elevationを検索する"></a></p>
+<figcaption>Difference From Mean Elevationを検索する</figcaption>
+</figure>
+</div>
+<ul>
+<li>Input DEMは、元のDEMを指定します。</li>
+<li>Odd filter width in cellsは、横方向のセル数を指定します。今回はデフォルトの11セルを指定しました。DEMの解像度や目的に応じて適切な値を設定する必要があります。</li>
+<li>Odd filter height in cellsも同様に、縦方向のセル数を指定します。今回はデフォルトの11セルを指定しました。基本的には、横方向と縦方向のセル数は同じ値を指定することが多いと思います。</li>
+</ul>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><a href="assets/difference_from_mean_elevation_setting.webp" class="lightbox" data-gallery="quarto-lightbox-gallery-21" title="Difference From Mean Elevationの設定"><img src="assets/difference_from_mean_elevation_setting.webp" class="img-fluid figure-img" alt="Difference From Mean Elevationの設定"></a></p>
+<figcaption>Difference From Mean Elevationの設定</figcaption>
+</figure>
+</div>
+<ul>
+<li>実行し、結果を確認します。TPIのラスタが生成されます。</li>
+</ul>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><a href="assets/check_tpi.webp" class="lightbox" data-gallery="quarto-lightbox-gallery-22" title="TPIの確認"><img src="assets/check_tpi.webp" class="img-fluid figure-img" alt="TPIの確認"></a></p>
+<figcaption>TPIの確認</figcaption>
+</figure>
+</div>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "コピーしました");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "コピーしました");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/maple60/dem-twi-r/edit/main/notebooks/topographic_wetness_index_qgis.qmd" class="toc-action"><i class="bi bi-github"></i>編集</a></li><li><a href="https://github.com/maple60/dem-twi-r/blob/main/notebooks/topographic_wetness_index_qgis.qmd" class="toc-action"><i class="bi empty"></i>ソースコード</a></li><li><a href="https://github.com/maple60/dem-twi-r/issues/new" class="toc-action"><i class="bi empty"></i>問題を報告</a></li></ul></div></div></div></footer><script>var lightboxQuarto = GLightbox({"closeEffect":"zoom","descPosition":"bottom","loop":false,"openEffect":"zoom","selector":".lightbox"});
+(function() {
+  let previousOnload = window.onload;
+  window.onload = () => {
+    if (previousOnload) {
+      previousOnload();
+    }
+    lightboxQuarto.on('slide_before_load', (data) => {
+      const { slideIndex, slideNode, slideConfig, player, trigger } = data;
+      const href = trigger.getAttribute('href');
+      if (href !== null) {
+        const imgEl = window.document.querySelector(`a[href="${href}"] img`);
+        if (imgEl !== null) {
+          const srcAttr = imgEl.getAttribute("src");
+          if (srcAttr && srcAttr.startsWith("data:")) {
+            slideConfig.href = srcAttr;
+          }
+        }
+      } 
+    });
+  
+    lightboxQuarto.on('slide_after_load', (data) => {
+      const { slideIndex, slideNode, slideConfig, player, trigger } = data;
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(slideNode);
+      }
+    });
+  
+  };
+  
+})();
+          </script>
+
+
+
+
+</body></html>
