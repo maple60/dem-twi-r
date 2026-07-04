@@ -1,0 +1,154 @@
+---
+title: "Calculating the Topographic Wetness Index (TWI) with QGIS"
+lang: en
+lightbox: true
+---
+
+::: {.callout-note}
+[Japanese version](../../notebooks/topographic_wetness_index_qgis.qmd)
+:::
+
+This page introduces how to calculate the Topographic Wetness Index (TWI) in QGIS.
+TWI is an index for evaluating relative terrain wetness and is important in watershed analysis and hydrological research.
+It can also be calculated with tools such as SAGA GIS and GRASS GIS, but here we use WhiteboxTools directly from QGIS.
+
+## Load the DEM
+
+- Open the Data Source Manager.
+
+- Select the "Raster" tab and load the DEM (digital elevation model). The `.tif` extension is common.
+
+![Load the DEM](../../notebooks/assets/add_raster_layer.webp)
+
+- Confirm that the loaded DEM appears in the QGIS Layers panel.
+
+- If necessary, clip the raster. You can do this from the "Raster" menu under "Extraction".
+
+![Clip the raster](../../notebooks/assets/clip_raster.webp)
+
+## Set the coordinate reference system
+
+- Check the DEM coordinate reference system. Right-click the layer and select "Layer CRS" and then "Set Layer CRS".
+- Set a **projected coordinate reference system in meters**. In Japan, the JGD2011 Japan Plane Rectangular CS can be used. For example, EPSG:6674 is suitable around Kyoto. See the [GSI page](https://www.gsi.go.jp/LAW/heimencho.html) for the Japan Plane Rectangular Coordinate System.
+
+![Set the coordinate reference system](../../notebooks/assets/set_crs.webp)
+
+## Breaching depressions
+
+Breaching depressions removes low spots and pits in the DEM.
+This improves the accuracy of watershed analysis.
+If this step is skipped, water may be trapped in small depressions, causing flow paths to stop or point in unnatural directions.
+
+- Type "Breach Depressions" in the search box on the Whitebox Workflows tab.
+
+![Search for Breach Depressions](../../notebooks/assets/select_breaching_depression.webp)
+
+- Double-click **Breach Depressions Least Cost** to open the tool window.
+    - **Maximum search distance in cells** specifies the maximum search distance, in cells, for removing depressions. Choose an appropriate value based on the resolution and purpose. In this example, the DEM resolution was 1 m, so 20 cells were used to remove depressions within about 20 m.
+    - **Fill unresolved depression after breaching** specifies whether unresolved depressions are filled after breaching. It was checked in this example.
+    - Specify an output file path if needed. It was not specified in this example.
+
+![Breach Depressions Least Cost](../../notebooks/assets/breaching_depression.webp)
+
+- Check the result. In many cases, the changes may be small. You can also compare the original DEM and the processed DEM with the Raster Calculator.
+
+![Compare with the original DEM](../../notebooks/assets/compare_dem.webp)
+
+## Calculate flow direction
+
+- Search for "D8 Pointer" and double-click **D8 Pointer**.
+
+![Search for D8 Pointer](../../notebooks/assets/select_d8_pointer.webp)
+
+- In most cases, the defaults are fine. Click Run. You can also specify an output file path.
+
+- Check the result. A raster showing flow direction is generated.
+
+![Check flow direction](../../notebooks/assets/check_flow_direction.webp)
+
+::: {.callout-note}
+
+This example uses the D8 algorithm, but D-infinity and FD algorithms can also be used.
+
+:::
+
+## Calculate flow accumulation
+
+- Search for "D8 Flow Accumulation" and double-click **D8 Flow Accumulation**.
+
+![Search for D8 Flow Accumulation](../../notebooks/assets/select_d8_flow_accumulation.webp)
+
+- For Input DEM, choose the D8 Pointer raster created above.
+- For Output type, select `sca`. This calculates flow accumulation as specific catchment area. `sca` stands for Specific Catchment Area, which means contributing area per unit contour width.
+- Check "Treat input as D8 pointer raster". This tells the tool that the input is a D8 Pointer raster.
+
+- Run the tool and check the result.
+
+![Check flow accumulation](../../notebooks/assets/check_flow_accumulation.webp)
+
+## Calculate slope
+
+- Search for "Slope" and double-click **Slope**.
+
+![Search for Slope](../../notebooks/assets/select_slope.webp)
+
+- For Input DEM, select the DEM produced by breaching depressions.
+- For Output unit, select `degree`.
+- Set Z conversion factor to 1.0 or leave it unset. Use this when the vertical and horizontal units of the DEM are the same. If the vertical unit differs, set an appropriate conversion factor.
+
+![Calculate slope](../../notebooks/assets/slope_calculation.webp)
+
+- Run the tool and check the result.
+
+![Check slope](../../notebooks/assets/check_slope.webp)
+
+## Calculate the Topographic Wetness Index (TWI)
+
+- Search for "Wetness Index" and double-click **Wetness Index**.
+
+![Search for Wetness Index](../../notebooks/assets/select_wetness_index.webp)
+
+- For Specific catchment area raster, select the flow accumulation raster calculated above.
+- For Slope raster, select the slope raster calculated above.
+
+![Calculate Wetness Index](../../notebooks/assets/wetness_index_calculation.webp)
+
+- Run the tool and check the result. A TWI raster is generated.
+
+![Check TWI](../../notebooks/assets/check_twi.webp)
+
+## Optional: make the result easier to read
+
+By default, the color scale is often gray.
+To make the TWI values easier to interpret visually, change the color scale.
+
+- Right-click the layer and select "Properties".
+- In the "Symbology" tab, set the following:
+    - Render type: Singleband pseudocolor
+    - Interpolation: Linear
+    - Color ramp: any color ramp. Viridis was used here.
+
+![Set symbology](../../notebooks/assets/change_color_scale_setting.webp)
+
+- Click Apply. The TWI values are now shown with colors and are easier to interpret visually.
+
+![Change the color scale](../../notebooks/assets/change_color_scale.webp)
+
+## Bonus: calculate the Topographic Position Index (TPI)
+
+The Topographic Position Index evaluates terrain convexity, concavity, and local position.
+TPI is calculated from the difference between a cell's elevation and the surrounding elevation.
+
+- Search for "Difference From Mean Elevation" and double-click **Difference From Mean Elevation**.
+
+![Search for Difference From Mean Elevation](../../notebooks/assets/select_difference_from_mean_elevation.webp)
+
+- For Input DEM, select the original DEM.
+- Odd filter width in cells specifies the number of horizontal cells. In this example, the default value of 11 cells was used. Choose an appropriate value according to the DEM resolution and the analysis purpose.
+- Odd filter height in cells is the corresponding vertical cell count. In this example, the default value of 11 cells was used. In many cases, the horizontal and vertical cell counts should be the same.
+
+![Set Difference From Mean Elevation](../../notebooks/assets/difference_from_mean_elevation_setting.webp)
+
+- Run the tool and check the result. A TPI raster is generated.
+
+![Check TPI](../../notebooks/assets/check_tpi.webp)

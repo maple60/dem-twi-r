@@ -1,0 +1,51 @@
+---
+title: "Calculating TWI/TPI from DEMs"
+lang: en
+---
+
+This site summarizes how to calculate the Topographic Wetness Index (TWI) and Topographic Position Index (TPI) from DEMs (digital elevation models), mainly with R.
+
+::: {.callout-note}
+[Japanese version](../index.qmd)
+:::
+
+## Notebooks
+
+The notebooks cover the workflow from preparing DEM data to calculating TWI and TPI.
+Use the **English** tab in the navigation bar, or the links below.
+
+- [Preparing DEM data](notebooks/dem_download.qmd)
+- [Calculating the Topographic Wetness Index (TWI) with R](notebooks/topographic_wetness_index.qmd)
+- [Calculating the Topographic Position Index (TPI) with R](notebooks/topographic_position_index.qmd)
+- [Calculating TWI and TPI with QGIS](notebooks/topographic_wetness_index_qgis.qmd)
+
+## App
+
+The site also includes a conceptual TWI demo built with [Shinylive](https://shiny.posit.co/py/get-started/shinylive.html), which runs a Shiny app on a static website.
+Use **Shinylive App** in the navigation bar, or open the link below.
+
+- [Conceptual TWI demo](../app/)
+
+Running WhiteboxTools in Shinylive appears to be difficult, so this is not a full application.
+
+A separate hosted application is available for calculating TWI and TPI from your own DEM or sample data.
+Use **TWI/TPI calculation app** in the navigation bar, or open the link below.
+
+- [TWI/TPI calculation app](https://maple60-dem-terrain-indices-app.share.connect.posit.cloud/)
+
+The application runs on [Posit Connect Cloud](https://posit.co/products/enterprise/connect-cloud).
+Its source code is available here:
+
+- [maple60/dem-terrain-indices-app](https://github.com/maple60/dem-terrain-indices-app)
+
+## Other Notes
+
+To view or run the code locally, use the GitHub icon in the upper-right corner to open the repository.
+
+This repository uses [renv](https://rstudio.github.io/renv/) for R package management.
+After cloning the repository, run the following command in an R console to install the required packages.
+
+```{.r}
+# install.packages("renv") # if renv is not installed yet
+renv::restore()
+```

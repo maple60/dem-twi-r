@@ -1,0 +1,61 @@
+---
+title: "Calculating the Topographic Position Index"
+lang: en
+---
+
+::: {.callout-note}
+[Japanese version](../../notebooks/topographic_position_index.qmd)
+:::
+
+The Topographic Position Index (TPI) is an index for quantifying the local position of terrain.
+It is calculated as the difference between the elevation of a target cell and the mean elevation of its surrounding cells.
+Positive values indicate that the cell is higher than its surroundings, while negative values indicate that it is lower.
+
+$$
+TPI = elevation - mean elevation of surrounding cells
+$$
+
+Here, we calculate TPI from a DEM (Digital Elevation Model) with the R package [terra](https://rspatial.github.io/terra/index.html).
+
+The example uses sample data from the [`whitebox`](https://whiteboxr.gishub.org/index.html) package.
+
+```{r}
+# install.packages("terra") # if terra is not installed yet
+# renv::install("terra") # if you use renv
+# install.packages("whitebox") # if whitebox is not installed yet
+# renv::install("whitebox") # if you use renv
+library(terra)
+library(whitebox)
+
+dem_path <- sample_dem_data()
+dem <- rast(dem_path)
+plot(dem)
+```
+
+After deciding how many surrounding cells to use for each elevation value, use `terra::focal()` to calculate the mean elevation of the neighboring cells.
+Here, we use a 3 x 3 window.
+
+```{r}
+w <- matrix(1, nrow = 3, ncol = 3) # 3 x 3 window
+w[2, 2] <- NA # exclude the center cell from the neighborhood mean
+
+mean_neigh <- focal(
+  dem,
+  w = w,
+  fun = mean,
+  na.rm = TRUE
+)
+
+tpi_3_3 <- dem - mean_neigh
+plot(tpi_3_3, main = "TPI (3x3)")
+```
+
+Interpretation is as follows.
+
+| TPI | Meaning |
+| --: | ------- |
+| Positive | Higher than the surroundings; closer to a ridge or convex landform |
+| Around 0 | Similar to the surroundings |
+| Negative | Lower than the surroundings; closer to a valley or concave landform |
+
+The spatial scale used for TPI should be chosen according to the purpose of the analysis.

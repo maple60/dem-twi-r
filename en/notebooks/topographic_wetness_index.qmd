@@ -1,0 +1,204 @@
+---
+title: "Calculating the Topographic Wetness Index"
+lang: en
+---
+
+::: {.callout-note}
+[Japanese version](../../notebooks/topographic_wetness_index.qmd)
+:::
+
+## Overview
+
+This notebook shows how to calculate the Topographic Wetness Index (TWI) from a DEM (digital elevation model) with the R package [`whitebox`](https://whiteboxr.gishub.org/index.html).
+
+## Workflow
+
+The workflow is as follows.
+
+```{mermaid}
+graph TD
+    A[Read DEM] --> B[Depression breaching]
+    B --> C[Calculate flow accumulation]
+    C --> D[Calculate slope]
+    D --> E[Calculate TWI]
+```
+
+## Setup
+
+If this is your first time using `whitebox`, run the following code to install [WhiteboxTools](https://www.whiteboxgeo.com/).
+The calculation itself is performed by the external WhiteboxTools executable; R works as an interface to call it.
+
+```{r whitebox-install, eval=FALSE}
+# Run only once if needed
+# renv::install("terra")
+# renv::install("whitebox")
+whitebox::install_whitebox()
+```
+
+Load the libraries.
+The [`terra`](https://rspatial.github.io/terra/index.html) package is used for raster data handling.
+The [`whitebox`](https://whiteboxr.gishub.org/index.html) package is used to call WhiteboxTools from R.
+
+```{r}
+library(terra)
+library(whitebox)
+
+# Get the WhiteboxTools executable path and confirm that it exists
+wbt_path <- wbt_exe_path(shell_quote = FALSE)
+if (!whitebox::check_whitebox_binary()) {
+  stop(
+    "WhiteboxTools executable was not found: ",
+    wbt_path,
+    "\n",
+    "Run whitebox::install_whitebox() once, then rerun this notebook.",
+    call. = FALSE
+  )
+}
+
+# Check the WhiteboxTools path and version
+wbt_path
+whitebox::wbt_version()
+
+# Create the output directory
+output_dir <- "output"
+dir.create(output_dir, showWarnings = FALSE)
+```
+
+## Read and visualize the DEM
+
+This example uses sample data from the `whitebox` package.
+
+```{r}
+dem_path <- sample_dem_data()
+dem <- rast(dem_path)
+print(dem)
+
+# Visualization
+plot(dem, axes = FALSE, main = "DEM (Original)")
+```
+
+::: {.callout-important}
+
+## Coordinate Reference System
+
+The DEM must use a projected coordinate reference system.
+If it uses a geographic coordinate reference system, distance and area calculations are not accurate, and the resulting TWI may be unreliable.
+
+The following code checks whether the CRS is set and whether it is projected.
+
+```{r}
+# Check the coordinate reference system
+if (!nzchar(crs(dem))) {
+  stop("DEM has no coordinate reference system.", call. = FALSE)
+}
+# Check whether the DEM uses a projected coordinate reference system
+if (isTRUE(is.lonlat(dem))) {
+  stop("DEM must use a projected coordinate reference system.", call. = FALSE)
+}
+```
+
+:::
+
+## Depression breaching
+
+First, run depression breaching to remove depressions from the DEM.
+This is an important preprocessing step for hydrological terrain analysis.
+
+The `wbt_breach_depressions_least_cost()` function performs depression breaching.
+The required arguments are:
+
+- `dem`: file path to the input DEM
+- `output`: file path for the output raster
+- `dist`: search distance for removing depressions; the unit depends on the DEM coordinate system
+
+The `fill` argument is `TRUE` by default, which fills unresolved depressions after breaching.
+In most cases, leaving `fill = TRUE` should be fine.
+
+```{r}
+wbt_breach_depressions_least_cost(
+  dem = dem_path,
+  output = file.path(output_dir, "dem_breached.tif"),
+  dist = 20,
+  fill = TRUE
+)
+dem_breached <- rast(file.path(output_dir, "dem_breached.tif"))
+```
+
+Compare the breached DEM with the original DEM.
+
+```{r}
+# Compare the breached DEM with the original DEM
+local({
+  old_mar <- par("mar")
+  on.exit(par(mar = old_mar), add = TRUE)
+
+  par(mar = c(2, 1, 2, 1))
+  plot(dem, axes = FALSE, main = "DEM (Original)")
+  plot(dem_breached, axes = FALSE, main = "DEM (Breached Depressions)")
+  plot(
+    dem - dem_breached,
+    axes = FALSE,
+    main = "Difference (Original - Breached)"
+  )
+})
+```
+
+In this sample data, elevation changes caused by depression breaching were very small.
+
+## Flow accumulation
+
+Next, calculate flow accumulation.
+This step estimates how much upslope contributing area flows into each cell.
+
+```{r}
+wbt_d8_flow_accumulation(
+  input = file.path(output_dir, "dem_breached.tif"),
+  output = file.path(output_dir, "d8_accum.tif"),
+  out_type = "specific contributing area",
+  log = FALSE
+)
+dem_breached_d8_accum <- rast(file.path(
+  output_dir,
+  "d8_accum.tif"
+))
+plot(dem_breached_d8_accum, axes = FALSE, main = "Flow Accumulation (D8)")
+```
+
+This calculates flow accumulation with the D8 algorithm.
+`out_type = "specific contributing area"` means that the output is specific catchment area, or contributing area per unit contour width.
+
+Other options include `wbt_d_inf_flow_accumulation()` for D-infinity flow accumulation and `wbt_fd8_flow_accumulation()` for FD8 flow accumulation.
+I am still learning the details, but the appropriate method appears to depend on the analysis.
+
+## Slope
+
+Next, calculate slope from the DEM with `wbt_slope()`.
+
+```{r}
+wbt_slope(
+  dem = file.path(output_dir, "dem_breached.tif"),
+  output = file.path(output_dir, "d8_slope.tif"),
+  units = "degrees"
+)
+dem_breached_slope <- rast(file.path(
+  output_dir,
+  "d8_slope.tif"
+))
+plot(dem_breached_slope, axes = FALSE, main = "Slope (degrees)")
+```
+
+## TWI (Topographic Wetness Index)
+
+Use `wbt_wetness_index()` to calculate TWI.
+This function takes flow accumulation and slope rasters as inputs and calculates the Topographic Wetness Index.
+
+```{r}
+wbt_wetness_index(
+  sca = file.path(output_dir, "d8_accum.tif"),
+  slope = file.path(output_dir, "d8_slope.tif"),
+  output = file.path(output_dir, "d8_twi.tif")
+)
+twi <- rast(file.path(output_dir, "d8_twi.tif"))
+
+plot(twi, axes = FALSE, main = "TWI (Topographic Wetness Index)")
+```

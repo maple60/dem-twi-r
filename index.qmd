@@ -4,6 +4,8 @@ title: "DEMからTWI/TPIを計算する"
 
 このサイトでは、DEM (数値標高モデル)から地形湿潤指数 (Topographic Wetness Index, TWI)や地形位置指数 (Topographic Position Index, TPI)をR実装する方法についてまとめました。
 
+英語版は上部の**English**タブ、または[English version](en/index.qmd)からアクセスできます。
+
 ## Notebooks
 
 DEMデータの準備からTWI/TPIの計算まで、ノートブックでまとめました。

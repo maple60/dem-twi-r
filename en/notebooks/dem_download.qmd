@@ -1,0 +1,41 @@
+---
+title: "Preparing DEM Data"
+lang: en
+execute:
+  eval: false
+---
+
+::: {.callout-note}
+[Japanese version](../../notebooks/dem_download.qmd)
+:::
+
+## Download
+
+Download a DEM (digital elevation model) from the Geospatial Information Authority of Japan's Fundamental Geospatial Data Download Service.
+
+- [Fundamental Geospatial Data Download Service](https://service.gsi.go.jp/kiban/)
+
+The coordinate reference system appears to have changed from "JGD2011" to "JGD2024".
+
+Because the data are selected by first-level mesh, it is useful to identify the second-level mesh that covers your target area first.
+The following GSI page can help you keep the downloaded data as small as possible.
+
+- [Publication range for Digital Topographic Map second-level mesh sheets | GSI](https://www.gsi.go.jp/kibanjoho/kibanjoho50014.html)
+
+## Convert to tif
+
+Data from the [Fundamental Geospatial Data Download Service](https://service.gsi.go.jp/kiban/) are distributed as zip files.
+After extracting them, you will find XML files.
+
+For easier analysis, convert them to GeoTIFF (`.tif`).
+The easiest option is to use the QGIS [QuickDEM4JP](https://plugins.qgis.org/plugins/QuickDEM4JP/) plugin.
+
+This plugin makes it straightforward to create a DEM in tif format.
+
+## Crop
+
+If the DEM is too large, crop it to the required extent with the `clip_raster` function from [**whitebox**](https://whiteboxr.gishub.org/index.html).
+
+If you prefer a GUI workflow, [WhiteboxTools GUI](https://jblindsay.github.io/ghrg/whiteboxgui/) is also useful.
+
+You can also crop rasters in QGIS.

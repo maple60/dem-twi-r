@@ -2,6 +2,7 @@
 .vscode/settings.json
 /.quarto/
 /_site/
+/_freeze/
 /_quarto_check/
 
 **/*.quarto_ipynb
