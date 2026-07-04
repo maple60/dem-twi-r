@@ -88,7 +88,7 @@
     "href": "index.html#notebooks",
     "title": "DEMからTWI/TPIを計算する",
     "section": "Notebooks",
-    "text": "Notebooks\nDEMデータの準備からTWI/TPIの計算まで、ノートブックでまとめました。 上部のNotebooksメニューもしくは以下のリンクからアクセスできます。\n\nDEMデータの準備 (未完成)\n地形湿潤指数 (TWI)の計算\n地形位置指数 (TPI)の計算"
+    "text": "Notebooks\nDEMデータの準備からTWI/TPIの計算まで、ノートブックでまとめました。 上部のNotebooksメニューもしくは以下のリンクからアクセスできます。\n\nDEMデータの準備 (未完成)\nRによる地形湿潤指数 (TWI)の計算\nRによる地形位置指数 (TPI)の計算\nQGISによるTWIとTPIの計算"
   },
   {
     "objectID": "index.html#app",
