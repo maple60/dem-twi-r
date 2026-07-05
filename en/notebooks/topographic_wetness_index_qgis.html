@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml" lang="ja" xml:lang="ja"><head>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
 <meta name="generator" content="quarto-1.9.38">
@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>QGISで地形湿潤指数 (TWI) を計算する – DEMからTWI/TPIを計算する</title>
+<title>Calculating the Topographic Wetness Index (TWI) with QGIS – DEMからTWI/TPIを計算する</title>
 <style>
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
@@ -26,26 +26,26 @@ ul.task-list li input[type="checkbox"] {
 </style>
 
 
-<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
-<script src="../site_libs/quarto-nav/headroom.min.js"></script>
-<script src="../site_libs/clipboard/clipboard.min.js"></script>
-<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
-<script src="../site_libs/quarto-search/fuse.min.js"></script>
-<script src="../site_libs/quarto-search/quarto-search.js"></script>
-<meta name="quarto:offset" content="../">
-<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
-<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
-<script src="../site_libs/quarto-html/popper.min.js"></script>
-<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
-<script src="../site_libs/quarto-html/anchor.min.js"></script>
-<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-15634bcf2e68342d4ad2dfa704d543f6.css" rel="stylesheet" id="quarto-text-highlighting-styles">
-<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
-<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-bba5ebae505b5c03f3f0d8040a416a6b.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
-<script src="../site_libs/quarto-contrib/glightbox/glightbox.min.js"></script>
-<link href="../site_libs/quarto-contrib/glightbox/glightbox.min.css" rel="stylesheet">
-<link href="../site_libs/quarto-contrib/glightbox/lightbox.css" rel="stylesheet">
+<script src="../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../">
+<script src="../../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-15634bcf2e68342d4ad2dfa704d543f6.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../site_libs/bootstrap/bootstrap-bba5ebae505b5c03f3f0d8040a416a6b.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script src="../../site_libs/quarto-contrib/glightbox/glightbox.min.js"></script>
+<link href="../../site_libs/quarto-contrib/glightbox/glightbox.min.css" rel="stylesheet">
+<link href="../../site_libs/quarto-contrib/glightbox/lightbox.css" rel="stylesheet">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -60,17 +60,17 @@ ul.task-list li input[type="checkbox"] {
   ],
   "show-item-context": false,
   "language": {
-    "search-no-results-text": "一致なし",
-    "search-matching-documents-text": "一致した文書",
-    "search-copy-link-title": "検索へのリンクをコピー",
-    "search-hide-matches-text": "追加の検索結果を非表示",
-    "search-more-match-text": "追加の検索結果",
-    "search-more-matches-text": "追加の検索結果",
-    "search-clear-button-title": "消去",
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
     "search-text-placeholder": "",
-    "search-detached-cancel-button-title": "取消",
-    "search-submit-button-title": "検索",
-    "search-label": "サーチ"
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
   }
 }</script>
 
@@ -84,18 +84,18 @@ ul.task-list li input[type="checkbox"] {
     <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
       <div class="navbar-container container-fluid">
       <div class="navbar-brand-container mx-auto">
-    <a class="navbar-brand" href="../index.html">
+    <a class="navbar-brand" href="../../index.html">
     <span class="navbar-title">DEMからTWI/TPIを計算する</span>
     </a>
   </div>
-            <div id="quarto-search" class="" title="サーチ"></div>
-          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="ナビゲーションを切り替える" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
   <span class="navbar-toggler-icon"></span>
 </button>
           <div class="collapse navbar-collapse" id="navbarCollapse">
             <ul class="navbar-nav navbar-nav-scroll me-auto">
   <li class="nav-item">
-    <a class="nav-link" href="../index.html"> 
+    <a class="nav-link" href="../../index.html"> 
 <span class="menu-text">Home</span></a>
   </li>  
   <li class="nav-item dropdown ">
@@ -104,25 +104,25 @@ ul.task-list li input[type="checkbox"] {
     </a>
     <ul class="dropdown-menu" aria-labelledby="nav-menu-notebooks">    
         <li>
-    <a class="dropdown-item" href="../notebooks/dem_download.html">
+    <a class="dropdown-item" href="../../notebooks/dem_download.html">
  <span class="dropdown-text">DEMデータの準備</span></a>
   </li>  
         <li>
-    <a class="dropdown-item" href="../notebooks/topographic_wetness_index.html">
+    <a class="dropdown-item" href="../../notebooks/topographic_wetness_index.html">
  <span class="dropdown-text">地形湿潤指数の計算</span></a>
   </li>  
         <li>
-    <a class="dropdown-item" href="../notebooks/topographic_position_index.html">
+    <a class="dropdown-item" href="../../notebooks/topographic_position_index.html">
  <span class="dropdown-text">地形位置指数の計算</span></a>
   </li>  
         <li>
-    <a class="dropdown-item" href="../notebooks/topographic_wetness_index_qgis.html">
+    <a class="dropdown-item" href="../../notebooks/topographic_wetness_index_qgis.html">
  <span class="dropdown-text">QGISによるTWIとTPIの計算</span></a>
   </li>  
     </ul>
   </li>
   <li class="nav-item">
-    <a class="nav-link" href="../app/"> 
+    <a class="nav-link" href="../../app/"> 
 <span class="menu-text">Shinylive App</span></a>
   </li>  
   <li class="nav-item">
@@ -130,7 +130,7 @@ ul.task-list li input[type="checkbox"] {
 <span class="menu-text">TWI/TPI計算アプリ</span></a>
   </li>  
   <li class="nav-item">
-    <a class="nav-link" href="../en/index.html"> 
+    <a class="nav-link" href="../../en/index.html"> 
 <span class="menu-text">English</span></a>
   </li>  
 </ul>
@@ -153,27 +153,27 @@ ul.task-list li input[type="checkbox"] {
 <!-- margin-sidebar -->
     <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
         <nav id="TOC" role="doc-toc" class="toc-active">
-    <h2 id="toc-title">目次</h2>
+    <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#demの読み込み" id="toc-demの読み込み" class="nav-link active" data-scroll-target="#demの読み込み">DEMの読み込み</a></li>
-  <li><a href="#座標系の設定" id="toc-座標系の設定" class="nav-link" data-scroll-target="#座標系の設定">座標系の設定</a></li>
-  <li><a href="#breaching-depressions" id="toc-breaching-depressions" class="nav-link" data-scroll-target="#breaching-depressions">Breaching Depressions</a></li>
-  <li><a href="#流れの方向を計算する" id="toc-流れの方向を計算する" class="nav-link" data-scroll-target="#流れの方向を計算する">流れの方向を計算する</a></li>
-  <li><a href="#流域蓄積の計算" id="toc-流域蓄積の計算" class="nav-link" data-scroll-target="#流域蓄積の計算">流域蓄積の計算</a></li>
-  <li><a href="#傾斜の計算" id="toc-傾斜の計算" class="nav-link" data-scroll-target="#傾斜の計算">傾斜の計算</a></li>
-  <li><a href="#地形湿潤指数-twiの計算" id="toc-地形湿潤指数-twiの計算" class="nav-link" data-scroll-target="#地形湿潤指数-twiの計算">地形湿潤指数 (TWI)の計算</a></li>
-  <li><a href="#任意結果を見やすくする" id="toc-任意結果を見やすくする" class="nav-link" data-scroll-target="#任意結果を見やすくする">(任意)結果を見やすくする</a></li>
-  <li><a href="#おまけ地形位置指標-tpiの計算" id="toc-おまけ地形位置指標-tpiの計算" class="nav-link" data-scroll-target="#おまけ地形位置指標-tpiの計算">(おまけ)地形位置指標 (TPI)の計算</a></li>
+  <li><a href="#load-the-dem" id="toc-load-the-dem" class="nav-link active" data-scroll-target="#load-the-dem">Load the DEM</a></li>
+  <li><a href="#set-the-coordinate-reference-system" id="toc-set-the-coordinate-reference-system" class="nav-link" data-scroll-target="#set-the-coordinate-reference-system">Set the coordinate reference system</a></li>
+  <li><a href="#breaching-depressions" id="toc-breaching-depressions" class="nav-link" data-scroll-target="#breaching-depressions">Breaching depressions</a></li>
+  <li><a href="#calculate-flow-direction" id="toc-calculate-flow-direction" class="nav-link" data-scroll-target="#calculate-flow-direction">Calculate flow direction</a></li>
+  <li><a href="#calculate-flow-accumulation" id="toc-calculate-flow-accumulation" class="nav-link" data-scroll-target="#calculate-flow-accumulation">Calculate flow accumulation</a></li>
+  <li><a href="#calculate-slope" id="toc-calculate-slope" class="nav-link" data-scroll-target="#calculate-slope">Calculate slope</a></li>
+  <li><a href="#calculate-the-topographic-wetness-index-twi" id="toc-calculate-the-topographic-wetness-index-twi" class="nav-link" data-scroll-target="#calculate-the-topographic-wetness-index-twi">Calculate the Topographic Wetness Index (TWI)</a></li>
+  <li><a href="#optional-make-the-result-easier-to-read" id="toc-optional-make-the-result-easier-to-read" class="nav-link" data-scroll-target="#optional-make-the-result-easier-to-read">Optional: make the result easier to read</a></li>
+  <li><a href="#bonus-calculate-the-topographic-position-index-tpi" id="toc-bonus-calculate-the-topographic-position-index-tpi" class="nav-link" data-scroll-target="#bonus-calculate-the-topographic-position-index-tpi">Bonus: calculate the Topographic Position Index (TPI)</a></li>
   </ul>
-<div class="toc-actions"><ul><li><a href="https://github.com/maple60/dem-twi-r/edit/main/notebooks/topographic_wetness_index_qgis.qmd" class="toc-action"><i class="bi bi-github"></i>編集</a></li><li><a href="https://github.com/maple60/dem-twi-r/blob/main/notebooks/topographic_wetness_index_qgis.qmd" class="toc-action"><i class="bi empty"></i>ソースコード</a></li><li><a href="https://github.com/maple60/dem-twi-r/issues/new" class="toc-action"><i class="bi empty"></i>問題を報告</a></li></ul></div></nav>
+<div class="toc-actions"><ul><li><a href="https://github.com/maple60/dem-twi-r/edit/main/en/notebooks/topographic_wetness_index_qgis.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/maple60/dem-twi-r/blob/main/en/notebooks/topographic_wetness_index_qgis.qmd" class="toc-action"><i class="bi empty"></i>View source</a></li><li><a href="https://github.com/maple60/dem-twi-r/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">QGISで地形湿潤指数 (TWI) を計算する</h1>
+<h1 class="title">Calculating the Topographic Wetness Index (TWI) with QGIS</h1>
 </div>
 
 
@@ -190,106 +190,111 @@ ul.task-list li input[type="checkbox"] {
 </header>
 
 
-<p>QGISで地形湿潤指数 (TWI) を計算する方法を紹介します。 TWIは、地形の湿潤度を評価するための指標であり、流域解析や水文学的研究において重要な役割を果たします。 SAGA GISやGRASS GISなどのツールを使用して計算することもできますが、ここではWhiteboxToolsを使用してQGIS内で直接計算する方法を説明します。</p>
-<section id="demの読み込み" class="level2">
-<h2 class="anchored" data-anchor-id="demの読み込み">DEMの読み込み</h2>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Note
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><a href="../../notebooks/topographic_wetness_index_qgis.html">Japanese version</a></p>
+</div>
+</div>
+<p>This page introduces how to calculate the Topographic Wetness Index (TWI) in QGIS. TWI is an index for evaluating relative terrain wetness and is important in watershed analysis and hydrological research. It can also be calculated with tools such as SAGA GIS and GRASS GIS, but here we use WhiteboxTools directly from QGIS.</p>
+<section id="load-the-dem" class="level2">
+<h2 class="anchored" data-anchor-id="load-the-dem">Load the DEM</h2>
 <ul>
-<li>データソースマネージャを開きます</li>
+<li><p>Open the Data Source Manager.</p></li>
+<li><p>Select the “Raster” tab and load the DEM (digital elevation model). The <code>.tif</code> extension is common.</p></li>
 </ul>
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><a href="assets/open_data_source_manager.webp" class="lightbox" data-gallery="quarto-lightbox-gallery-1" title="データソースマネージャを開く"><img src="assets/open_data_source_manager.webp" class="img-fluid figure-img" alt="データソースマネージャを開く"></a></p>
-<figcaption>データソースマネージャを開く</figcaption>
+<p><a href="../../notebooks/assets/add_raster_layer.webp" class="lightbox" data-gallery="quarto-lightbox-gallery-1" title="Load the DEM"><img src="../../notebooks/assets/add_raster_layer.webp" class="img-fluid figure-img" alt="Load the DEM"></a></p>
+<figcaption>Load the DEM</figcaption>
 </figure>
 </div>
 <ul>
-<li>「ラスタ」タブを選択し、DEM (デジタル標高モデル)データを読み込みます。拡張子は<code>.tif</code>が一般的です</li>
+<li><p>Confirm that the loaded DEM appears in the QGIS Layers panel.</p></li>
+<li><p>If necessary, clip the raster. You can do this from the “Raster” menu under “Extraction”.</p></li>
 </ul>
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><a href="assets/add_raster_layer.webp" class="lightbox" data-gallery="quarto-lightbox-gallery-2" title="DEMを読み込む"><img src="assets/add_raster_layer.webp" class="img-fluid figure-img" alt="DEMを読み込む"></a></p>
-<figcaption>DEMを読み込む</figcaption>
-</figure>
-</div>
-<ul>
-<li><p>読み込んだDEMがQGISのレイヤーパネルに表示されるので確認します</p></li>
-<li><p>必要に応じてレイヤを切り抜きます。「ラスタ」メニューから「抽出」から切り抜くことが可能です</p></li>
-</ul>
-<div class="quarto-figure quarto-figure-center">
-<figure class="figure">
-<p><a href="assets/clip_raster.webp" class="lightbox" data-gallery="quarto-lightbox-gallery-3" title="ラスタを切り抜く"><img src="assets/clip_raster.webp" class="img-fluid figure-img" alt="ラスタを切り抜く"></a></p>
-<figcaption>ラスタを切り抜く</figcaption>
+<p><a href="../../notebooks/assets/clip_raster.webp" class="lightbox" data-gallery="quarto-lightbox-gallery-2" title="Clip the raster"><img src="../../notebooks/assets/clip_raster.webp" class="img-fluid figure-img" alt="Clip the raster"></a></p>
+<figcaption>Clip the raster</figcaption>
 </figure>
 </div>
 </section>
-<section id="座標系の設定" class="level2">
-<h2 class="anchored" data-anchor-id="座標系の設定">座標系の設定</h2>
+<section id="set-the-coordinate-reference-system" class="level2">
+<h2 class="anchored" data-anchor-id="set-the-coordinate-reference-system">Set the coordinate reference system</h2>
 <ul>
-<li>DEMの座標系を確認します。レイヤを右クリックして「レイヤのCRS」から「レイヤのCRSを設定」を選択します</li>
-<li><strong>m 単位の投影座標系</strong>を設定します。日本であれば、<strong>JGD2011 平面直角座標系</strong>というものがあります。例えば、京都周辺であればEPSG:6674です。日本における平面直角座標系については、<a href="https://www.gsi.go.jp/LAW/heimencho.html">国土地理院のページ</a>を参照してください。</li>
+<li>Check the DEM coordinate reference system. Right-click the layer and select “Layer CRS” and then “Set Layer CRS”.</li>
+<li>Set a <strong>projected coordinate reference system in meters</strong>. In Japan, the JGD2011 Japan Plane Rectangular CS can be used. For example, EPSG:6674 is suitable around Kyoto. See the <a href="https://www.gsi.go.jp/LAW/heimencho.html">GSI page</a> for the Japan Plane Rectangular Coordinate System.</li>
 </ul>
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><a href="assets/set_crs.webp" class="lightbox" data-gallery="quarto-lightbox-gallery-4" title="座標系の設定"><img src="assets/set_crs.webp" class="img-fluid figure-img" alt="座標系の設定"></a></p>
-<figcaption>座標系の設定</figcaption>
+<p><a href="../../notebooks/assets/set_crs.webp" class="lightbox" data-gallery="quarto-lightbox-gallery-3" title="Set the coordinate reference system"><img src="../../notebooks/assets/set_crs.webp" class="img-fluid figure-img" alt="Set the coordinate reference system"></a></p>
+<figcaption>Set the coordinate reference system</figcaption>
 </figure>
 </div>
 </section>
 <section id="breaching-depressions" class="level2">
-<h2 class="anchored" data-anchor-id="breaching-depressions">Breaching Depressions</h2>
-<p>breaching Depressionsは、DEM内の低地やくぼみを除去する処理です。これにより、流域解析の精度が向上します。 もしこの処理を行わないばあい、小さなくぼみに水が溜まり、流れが途切れたり、方向が不自然になったりすることがあります。</p>
+<h2 class="anchored" data-anchor-id="breaching-depressions">Breaching depressions</h2>
+<p>Breaching depressions removes low spots and pits in the DEM. This improves the accuracy of watershed analysis. If this step is skipped, water may be trapped in small depressions, causing flow paths to stop or point in unnatural directions.</p>
 <ul>
-<li>Whitebox Worlflowsのタブの検索窓に「Breach Depressions」と入力します</li>
+<li>Type “Breach Depressions” in the search box on the Whitebox Workflows tab.</li>
 </ul>
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><a href="assets/select_breaching_depression.webp" class="lightbox" data-gallery="quarto-lightbox-gallery-5" title="Breach Depressionsを検索する"><img src="assets/select_breaching_depression.webp" class="img-fluid figure-img" alt="Breach Depressionsを検索する"></a></p>
-<figcaption>Breach Depressionsを検索する</figcaption>
+<p><a href="../../notebooks/assets/select_breaching_depression.webp" class="lightbox" data-gallery="quarto-lightbox-gallery-4" title="Search for Breach Depressions"><img src="../../notebooks/assets/select_breaching_depression.webp" class="img-fluid figure-img" alt="Search for Breach Depressions"></a></p>
+<figcaption>Search for Breach Depressions</figcaption>
 </figure>
 </div>
 <ul>
-<li>表示された「<strong>Breach Depressions Least Cost</strong>」をダブルクリックしてツールウィンドウを開きます
+<li>Double-click <strong>Breach Depressions Least Cost</strong> to open the tool window.
 <ul>
-<li><strong>Maximum serch distance in cells</strong>は、くぼみを除去する際の最大探索距離をセル単位で指定します。解像度や目的に応じて適切な値を設定します。今回は1 m解像度でしたので、20セルを指定し、周辺20 mの範囲でくぼみを除去するようにしました。</li>
-<li><strong>fill unresolved depression after breaching</strong>は、くぼみを除去した後に残った解決されていないくぼみを埋めるかどうかを指定します。今回はチェックを入れました。</li>
-<li>必要に応じて出力ファイルのパスを指定します。今回は指定しませんでした。</li>
+<li><strong>Maximum search distance in cells</strong> specifies the maximum search distance, in cells, for removing depressions. Choose an appropriate value based on the resolution and purpose. In this example, the DEM resolution was 1 m, so 20 cells were used to remove depressions within about 20 m.</li>
+<li><strong>Fill unresolved depression after breaching</strong> specifies whether unresolved depressions are filled after breaching. It was checked in this example.</li>
+<li>Specify an output file path if needed. It was not specified in this example.</li>
 </ul></li>
 </ul>
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><a href="assets/breaching_depression.webp" class="lightbox" data-gallery="quarto-lightbox-gallery-6" title="Breach Depressions Least Cost"><img src="assets/breaching_depression.webp" class="img-fluid figure-img" alt="Breach Depressions Least Cost"></a></p>
+<p><a href="../../notebooks/assets/breaching_depression.webp" class="lightbox" data-gallery="quarto-lightbox-gallery-5" title="Breach Depressions Least Cost"><img src="../../notebooks/assets/breaching_depression.webp" class="img-fluid figure-img" alt="Breach Depressions Least Cost"></a></p>
 <figcaption>Breach Depressions Least Cost</figcaption>
 </figure>
 </div>
 <ul>
-<li>結果を確認します。あまり変化はないことが多いかもしれません。「ラスタ計算機」を使用して、元のDEMと比較することもできます。</li>
+<li>Check the result. In many cases, the changes may be small. You can also compare the original DEM and the processed DEM with the Raster Calculator.</li>
 </ul>
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><a href="assets/compare_dem.webp" class="lightbox" data-gallery="quarto-lightbox-gallery-7" title="元のDEMとの比較"><img src="assets/compare_dem.webp" class="img-fluid figure-img" alt="元のDEMとの比較"></a></p>
-<figcaption>元のDEMとの比較</figcaption>
+<p><a href="../../notebooks/assets/compare_dem.webp" class="lightbox" data-gallery="quarto-lightbox-gallery-6" title="Compare with the original DEM"><img src="../../notebooks/assets/compare_dem.webp" class="img-fluid figure-img" alt="Compare with the original DEM"></a></p>
+<figcaption>Compare with the original DEM</figcaption>
 </figure>
 </div>
 </section>
-<section id="流れの方向を計算する" class="level2">
-<h2 class="anchored" data-anchor-id="流れの方向を計算する">流れの方向を計算する</h2>
+<section id="calculate-flow-direction" class="level2">
+<h2 class="anchored" data-anchor-id="calculate-flow-direction">Calculate flow direction</h2>
 <ul>
-<li>検索窓で「D8 Pointer」と検索し、表示された「<strong>D8 Pointer</strong>」をダブルクリックしてツールウィンドウを開きます</li>
+<li>Search for “D8 Pointer” and double-click <strong>D8 Pointer</strong>.</li>
 </ul>
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><a href="assets/select_d8_pointer.webp" class="lightbox" data-gallery="quarto-lightbox-gallery-8" title="D8 Pointerを検索する"><img src="assets/select_d8_pointer.webp" class="img-fluid figure-img" alt="D8 Pointerを検索する"></a></p>
-<figcaption>D8 Pointerを検索する</figcaption>
+<p><a href="../../notebooks/assets/select_d8_pointer.webp" class="lightbox" data-gallery="quarto-lightbox-gallery-7" title="Search for D8 Pointer"><img src="../../notebooks/assets/select_d8_pointer.webp" class="img-fluid figure-img" alt="Search for D8 Pointer"></a></p>
+<figcaption>Search for D8 Pointer</figcaption>
 </figure>
 </div>
 <ul>
-<li><p>基本的にはデフォルトのままで、実行をクリックします。出力ファイルのパスを指定することもできます。</p></li>
-<li><p>結果を確認します。流れの方向が示されたラスタが生成されます。</p></li>
+<li><p>In most cases, the defaults are fine. Click Run. You can also specify an output file path.</p></li>
+<li><p>Check the result. A raster showing flow direction is generated.</p></li>
 </ul>
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><a href="assets/check_flow_direction.webp" class="lightbox" data-gallery="quarto-lightbox-gallery-9" title="流れの方向の確認"><img src="assets/check_flow_direction.webp" class="img-fluid figure-img" alt="流れの方向の確認"></a></p>
-<figcaption>流れの方向の確認</figcaption>
+<p><a href="../../notebooks/assets/check_flow_direction.webp" class="lightbox" data-gallery="quarto-lightbox-gallery-8" title="Check flow direction"><img src="../../notebooks/assets/check_flow_direction.webp" class="img-fluid figure-img" alt="Check flow direction"></a></p>
+<figcaption>Check flow direction</figcaption>
 </figure>
 </div>
 <div class="callout callout-style-default callout-note callout-titled">
@@ -298,159 +303,159 @@ ul.task-list li input[type="checkbox"] {
 <i class="callout-icon"></i>
 </div>
 <div class="callout-title-container flex-fill">
-ノート
+Note
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>今回はD8アルゴリズムを使用しましたが、D∞アルゴリズムやFDアルゴリズムなどを使用することもできます。</p>
+<p>This example uses the D8 algorithm, but D-infinity and FD algorithms can also be used.</p>
 </div>
 </div>
 </section>
-<section id="流域蓄積の計算" class="level2">
-<h2 class="anchored" data-anchor-id="流域蓄積の計算">流域蓄積の計算</h2>
+<section id="calculate-flow-accumulation" class="level2">
+<h2 class="anchored" data-anchor-id="calculate-flow-accumulation">Calculate flow accumulation</h2>
 <ul>
-<li>検索窓で「D8 Flow Accumulation」と検索し、表示された「<strong>D8 Flow Accumulation</strong>」をダブルクリックしてツールウィンドウを開きます</li>
+<li>Search for “D8 Flow Accumulation” and double-click <strong>D8 Flow Accumulation</strong>.</li>
 </ul>
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><a href="assets/select_d8_flow_accumulation.webp" class="lightbox" data-gallery="quarto-lightbox-gallery-10" title="D8 Flow Accumulationを検索する"><img src="assets/select_d8_flow_accumulation.webp" class="img-fluid figure-img" alt="D8 Flow Accumulationを検索する"></a></p>
-<figcaption>D8 Flow Accumulationを検索する</figcaption>
+<p><a href="../../notebooks/assets/select_d8_flow_accumulation.webp" class="lightbox" data-gallery="quarto-lightbox-gallery-9" title="Search for D8 Flow Accumulation"><img src="../../notebooks/assets/select_d8_flow_accumulation.webp" class="img-fluid figure-img" alt="Search for D8 Flow Accumulation"></a></p>
+<figcaption>Search for D8 Flow Accumulation</figcaption>
 </figure>
 </div>
 <ul>
-<li><p>Input DEMは先ほど出力したD8 Pointerを指定します。</p></li>
-<li><p>Output typeはscaを選択します。scaは流域蓄積の値をセル単位で計算する方法です。scaはSpecific Catchment Areaの略で、単位幅あたりの集水面積を表します。</p></li>
-<li><p>Treat input as D8 pointer rasterにチェックを入れます。これにより、入力がD8 Pointerラスタであることを指定します。</p></li>
-<li><p>実行し、結果を確認します。</p></li>
+<li><p>For Input DEM, choose the D8 Pointer raster created above.</p></li>
+<li><p>For Output type, select <code>sca</code>. This calculates flow accumulation as specific catchment area. <code>sca</code> stands for Specific Catchment Area, which means contributing area per unit contour width.</p></li>
+<li><p>Check “Treat input as D8 pointer raster”. This tells the tool that the input is a D8 Pointer raster.</p></li>
+<li><p>Run the tool and check the result.</p></li>
 </ul>
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><a href="assets/check_flow_accumulation.webp" class="lightbox" data-gallery="quarto-lightbox-gallery-11" title="流域蓄積の確認"><img src="assets/check_flow_accumulation.webp" class="img-fluid figure-img" alt="流域蓄積の確認"></a></p>
-<figcaption>流域蓄積の確認</figcaption>
-</figure>
-</div>
-</section>
-<section id="傾斜の計算" class="level2">
-<h2 class="anchored" data-anchor-id="傾斜の計算">傾斜の計算</h2>
-<ul>
-<li>検索窓で「Slope」と検索し、表示された「<strong>Slope</strong>」をダブルクリックしてツールウィンドウを開きます</li>
-</ul>
-<div class="quarto-figure quarto-figure-center">
-<figure class="figure">
-<p><a href="assets/select_slope.webp" class="lightbox" data-gallery="quarto-lightbox-gallery-12" title="Slopeを検索する"><img src="assets/select_slope.webp" class="img-fluid figure-img" alt="Slopeを検索する"></a></p>
-<figcaption>Slopeを検索する</figcaption>
-</figure>
-</div>
-<ul>
-<li>Input DEMはbreaching depressionを実行したDEMを指定します。</li>
-<li>Output unitはdegreeを選択します。傾斜の単位を度に設定します。</li>
-<li>Z conversion factorは1.0もしくは未設定にします。これはDEMの垂直単位が水平単位と同じである場合に使用します。もしDEMの垂直単位が異なる場合は、適切な変換係数を設定してください。</li>
-</ul>
-<div class="quarto-figure quarto-figure-center">
-<figure class="figure">
-<p><a href="assets/slope_calculation.webp" class="lightbox" data-gallery="quarto-lightbox-gallery-13" title="傾斜の計算"><img src="assets/slope_calculation.webp" class="img-fluid figure-img" alt="傾斜の計算"></a></p>
-<figcaption>傾斜の計算</figcaption>
-</figure>
-</div>
-<ul>
-<li>実行し、結果を確認します。</li>
-</ul>
-<div class="quarto-figure quarto-figure-center">
-<figure class="figure">
-<p><a href="assets/check_slope.webp" class="lightbox" data-gallery="quarto-lightbox-gallery-14" title="傾斜の確認"><img src="assets/check_slope.webp" class="img-fluid figure-img" alt="傾斜の確認"></a></p>
-<figcaption>傾斜の確認</figcaption>
+<p><a href="../../notebooks/assets/check_flow_accumulation.webp" class="lightbox" data-gallery="quarto-lightbox-gallery-10" title="Check flow accumulation"><img src="../../notebooks/assets/check_flow_accumulation.webp" class="img-fluid figure-img" alt="Check flow accumulation"></a></p>
+<figcaption>Check flow accumulation</figcaption>
 </figure>
 </div>
 </section>
-<section id="地形湿潤指数-twiの計算" class="level2">
-<h2 class="anchored" data-anchor-id="地形湿潤指数-twiの計算">地形湿潤指数 (TWI)の計算</h2>
+<section id="calculate-slope" class="level2">
+<h2 class="anchored" data-anchor-id="calculate-slope">Calculate slope</h2>
 <ul>
-<li>検索窓で「Wetness Index」と検索し、表示された「<strong>Wetness Index</strong>」をダブルクリックしてツールウィンドウを開きます</li>
+<li>Search for “Slope” and double-click <strong>Slope</strong>.</li>
 </ul>
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><a href="assets/select_wetness_index.webp" class="lightbox" data-gallery="quarto-lightbox-gallery-15" title="Wetness Indexを検索する"><img src="assets/select_wetness_index.webp" class="img-fluid figure-img" alt="Wetness Indexを検索する"></a></p>
-<figcaption>Wetness Indexを検索する</figcaption>
+<p><a href="../../notebooks/assets/select_slope.webp" class="lightbox" data-gallery="quarto-lightbox-gallery-11" title="Search for Slope"><img src="../../notebooks/assets/select_slope.webp" class="img-fluid figure-img" alt="Search for Slope"></a></p>
+<figcaption>Search for Slope</figcaption>
 </figure>
 </div>
 <ul>
-<li>Specific catchment area rasterは、先ほど計算した流域蓄積のラスタを指定します。</li>
-<li>Slope rasterは、先ほど計算した傾斜のラスタを指定します。</li>
+<li>For Input DEM, select the DEM produced by breaching depressions.</li>
+<li>For Output unit, select <code>degree</code>.</li>
+<li>Set Z conversion factor to 1.0 or leave it unset. Use this when the vertical and horizontal units of the DEM are the same. If the vertical unit differs, set an appropriate conversion factor.</li>
 </ul>
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><a href="assets/wetness_index_calculation.webp" class="lightbox" data-gallery="quarto-lightbox-gallery-16" title="Wetness Indexの計算"><img src="assets/wetness_index_calculation.webp" class="img-fluid figure-img" alt="Wetness Indexの計算"></a></p>
-<figcaption>Wetness Indexの計算</figcaption>
+<p><a href="../../notebooks/assets/slope_calculation.webp" class="lightbox" data-gallery="quarto-lightbox-gallery-12" title="Calculate slope"><img src="../../notebooks/assets/slope_calculation.webp" class="img-fluid figure-img" alt="Calculate slope"></a></p>
+<figcaption>Calculate slope</figcaption>
 </figure>
 </div>
 <ul>
-<li>実行し、結果を確認します。TWIのラスタが生成されます。</li>
+<li>Run the tool and check the result.</li>
 </ul>
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><a href="assets/check_twi.webp" class="lightbox" data-gallery="quarto-lightbox-gallery-17" title="TWIの確認"><img src="assets/check_twi.webp" class="img-fluid figure-img" alt="TWIの確認"></a></p>
-<figcaption>TWIの確認</figcaption>
+<p><a href="../../notebooks/assets/check_slope.webp" class="lightbox" data-gallery="quarto-lightbox-gallery-13" title="Check slope"><img src="../../notebooks/assets/check_slope.webp" class="img-fluid figure-img" alt="Check slope"></a></p>
+<figcaption>Check slope</figcaption>
 </figure>
 </div>
 </section>
-<section id="任意結果を見やすくする" class="level2">
-<h2 class="anchored" data-anchor-id="任意結果を見やすくする">(任意)結果を見やすくする</h2>
-<p>デフォルトではカラースケールがグレーで表示されることが多いです。TWIの値を視覚的にわかりやすくするために、カラースケールを変更することができます。</p>
+<section id="calculate-the-topographic-wetness-index-twi" class="level2">
+<h2 class="anchored" data-anchor-id="calculate-the-topographic-wetness-index-twi">Calculate the Topographic Wetness Index (TWI)</h2>
 <ul>
-<li>レイヤを右クリックし、「プロパティ」を選択します</li>
-<li>「シンポロジ」タブで以下のように設定します
+<li>Search for “Wetness Index” and double-click <strong>Wetness Index</strong>.</li>
+</ul>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><a href="../../notebooks/assets/select_wetness_index.webp" class="lightbox" data-gallery="quarto-lightbox-gallery-14" title="Search for Wetness Index"><img src="../../notebooks/assets/select_wetness_index.webp" class="img-fluid figure-img" alt="Search for Wetness Index"></a></p>
+<figcaption>Search for Wetness Index</figcaption>
+</figure>
+</div>
 <ul>
-<li>レンダリングタイプを：単バンド疑似カラー</li>
-<li>補完方法：線形</li>
-<li>カラーランプ: 任意のカラーランプ。今回はViridisを選択しました</li>
+<li>For Specific catchment area raster, select the flow accumulation raster calculated above.</li>
+<li>For Slope raster, select the slope raster calculated above.</li>
+</ul>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><a href="../../notebooks/assets/wetness_index_calculation.webp" class="lightbox" data-gallery="quarto-lightbox-gallery-15" title="Calculate Wetness Index"><img src="../../notebooks/assets/wetness_index_calculation.webp" class="img-fluid figure-img" alt="Calculate Wetness Index"></a></p>
+<figcaption>Calculate Wetness Index</figcaption>
+</figure>
+</div>
+<ul>
+<li>Run the tool and check the result. A TWI raster is generated.</li>
+</ul>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><a href="../../notebooks/assets/check_twi.webp" class="lightbox" data-gallery="quarto-lightbox-gallery-16" title="Check TWI"><img src="../../notebooks/assets/check_twi.webp" class="img-fluid figure-img" alt="Check TWI"></a></p>
+<figcaption>Check TWI</figcaption>
+</figure>
+</div>
+</section>
+<section id="optional-make-the-result-easier-to-read" class="level2">
+<h2 class="anchored" data-anchor-id="optional-make-the-result-easier-to-read">Optional: make the result easier to read</h2>
+<p>By default, the color scale is often gray. To make the TWI values easier to interpret visually, change the color scale.</p>
+<ul>
+<li>Right-click the layer and select “Properties”.</li>
+<li>In the “Symbology” tab, set the following:
+<ul>
+<li>Render type: Singleband pseudocolor</li>
+<li>Interpolation: Linear</li>
+<li>Color ramp: any color ramp. Viridis was used here.</li>
 </ul></li>
 </ul>
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><a href="assets/change_color_scale_setting.webp" class="lightbox" data-gallery="quarto-lightbox-gallery-18" title="シンポロジの設定"><img src="assets/change_color_scale_setting.webp" class="img-fluid figure-img" alt="シンポロジの設定"></a></p>
-<figcaption>シンポロジの設定</figcaption>
+<p><a href="../../notebooks/assets/change_color_scale_setting.webp" class="lightbox" data-gallery="quarto-lightbox-gallery-17" title="Set symbology"><img src="../../notebooks/assets/change_color_scale_setting.webp" class="img-fluid figure-img" alt="Set symbology"></a></p>
+<figcaption>Set symbology</figcaption>
 </figure>
 </div>
 <ul>
-<li>適用をクリックすると、TWIの値が色で表現され、視覚的にわかりやすくなります</li>
+<li>Click Apply. The TWI values are now shown with colors and are easier to interpret visually.</li>
 </ul>
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><a href="assets/change_color_scale.webp" class="lightbox" data-gallery="quarto-lightbox-gallery-19" title="カラースケールの変更"><img src="assets/change_color_scale.webp" class="img-fluid figure-img" alt="カラースケールの変更"></a></p>
-<figcaption>カラースケールの変更</figcaption>
+<p><a href="../../notebooks/assets/change_color_scale.webp" class="lightbox" data-gallery="quarto-lightbox-gallery-18" title="Change the color scale"><img src="../../notebooks/assets/change_color_scale.webp" class="img-fluid figure-img" alt="Change the color scale"></a></p>
+<figcaption>Change the color scale</figcaption>
 </figure>
 </div>
 </section>
-<section id="おまけ地形位置指標-tpiの計算" class="level2">
-<h2 class="anchored" data-anchor-id="おまけ地形位置指標-tpiの計算">(おまけ)地形位置指標 (TPI)の計算</h2>
-<p>地形位置指標は、地形の凸凹や位置を評価するための指標です。TPIは、周囲の標高との差を計算することで、地形の特徴を把握することができます。</p>
+<section id="bonus-calculate-the-topographic-position-index-tpi" class="level2">
+<h2 class="anchored" data-anchor-id="bonus-calculate-the-topographic-position-index-tpi">Bonus: calculate the Topographic Position Index (TPI)</h2>
+<p>The Topographic Position Index evaluates terrain convexity, concavity, and local position. TPI is calculated from the difference between a cell’s elevation and the surrounding elevation.</p>
 <ul>
-<li>検索窓で「Difference From Mean Elevation」を検索し、表示された「<strong>Difference From Mean Elevation</strong>」をダブルクリックしてツールウィンドウを開きます</li>
+<li>Search for “Difference From Mean Elevation” and double-click <strong>Difference From Mean Elevation</strong>.</li>
 </ul>
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><a href="assets/select_difference_from_mean_elevation.webp" class="lightbox" data-gallery="quarto-lightbox-gallery-20" title="Difference From Mean Elevationを検索する"><img src="assets/select_difference_from_mean_elevation.webp" class="img-fluid figure-img" alt="Difference From Mean Elevationを検索する"></a></p>
-<figcaption>Difference From Mean Elevationを検索する</figcaption>
+<p><a href="../../notebooks/assets/select_difference_from_mean_elevation.webp" class="lightbox" data-gallery="quarto-lightbox-gallery-19" title="Search for Difference From Mean Elevation"><img src="../../notebooks/assets/select_difference_from_mean_elevation.webp" class="img-fluid figure-img" alt="Search for Difference From Mean Elevation"></a></p>
+<figcaption>Search for Difference From Mean Elevation</figcaption>
 </figure>
 </div>
 <ul>
-<li>Input DEMは、元のDEMを指定します。</li>
-<li>Odd filter width in cellsは、横方向のセル数を指定します。今回はデフォルトの11セルを指定しました。DEMの解像度や目的に応じて適切な値を設定する必要があります。</li>
-<li>Odd filter height in cellsも同様に、縦方向のセル数を指定します。今回はデフォルトの11セルを指定しました。基本的には、横方向と縦方向のセル数は同じ値を指定することが多いと思います。</li>
+<li>For Input DEM, select the original DEM.</li>
+<li>Odd filter width in cells specifies the number of horizontal cells. In this example, the default value of 11 cells was used. Choose an appropriate value according to the DEM resolution and the analysis purpose.</li>
+<li>Odd filter height in cells is the corresponding vertical cell count. In this example, the default value of 11 cells was used. In many cases, the horizontal and vertical cell counts should be the same.</li>
 </ul>
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><a href="assets/difference_from_mean_elevation_setting.webp" class="lightbox" data-gallery="quarto-lightbox-gallery-21" title="Difference From Mean Elevationの設定"><img src="assets/difference_from_mean_elevation_setting.webp" class="img-fluid figure-img" alt="Difference From Mean Elevationの設定"></a></p>
-<figcaption>Difference From Mean Elevationの設定</figcaption>
+<p><a href="../../notebooks/assets/difference_from_mean_elevation_setting.webp" class="lightbox" data-gallery="quarto-lightbox-gallery-20" title="Set Difference From Mean Elevation"><img src="../../notebooks/assets/difference_from_mean_elevation_setting.webp" class="img-fluid figure-img" alt="Set Difference From Mean Elevation"></a></p>
+<figcaption>Set Difference From Mean Elevation</figcaption>
 </figure>
 </div>
 <ul>
-<li>実行し、結果を確認します。TPIのラスタが生成されます。</li>
+<li>Run the tool and check the result. A TPI raster is generated.</li>
 </ul>
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><a href="assets/check_tpi.webp" class="lightbox" data-gallery="quarto-lightbox-gallery-22" title="TPIの確認"><img src="assets/check_tpi.webp" class="img-fluid figure-img" alt="TPIの確認"></a></p>
-<figcaption>TPIの確認</figcaption>
+<p><a href="../../notebooks/assets/check_tpi.webp" class="lightbox" data-gallery="quarto-lightbox-gallery-21" title="Check TPI"><img src="../../notebooks/assets/check_tpi.webp" class="img-fluid figure-img" alt="Check TPI"></a></p>
+<figcaption>Check TPI</figcaption>
 </figure>
 </div>
 
@@ -483,12 +488,12 @@ ul.task-list li input[type="checkbox"] {
       // flash "checked"
       button.classList.add('code-copy-button-checked');
       var currentTitle = button.getAttribute("title");
-      button.setAttribute("title", "コピーしました");
+      button.setAttribute("title", "Copied!");
       let tooltip;
       if (window.bootstrap) {
         button.setAttribute("data-bs-toggle", "tooltip");
         button.setAttribute("data-bs-placement", "left");
-        button.setAttribute("data-bs-title", "コピーしました");
+        button.setAttribute("data-bs-title", "Copied!");
         tooltip = new bootstrap.Tooltip(button, 
           { trigger: "manual", 
             customClass: "code-copy-button-tooltip",
@@ -859,7 +864,7 @@ ul.task-list li input[type="checkbox"] {
   });
   </script>
 </div> <!-- /content -->
-<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/maple60/dem-twi-r/edit/main/notebooks/topographic_wetness_index_qgis.qmd" class="toc-action"><i class="bi bi-github"></i>編集</a></li><li><a href="https://github.com/maple60/dem-twi-r/blob/main/notebooks/topographic_wetness_index_qgis.qmd" class="toc-action"><i class="bi empty"></i>ソースコード</a></li><li><a href="https://github.com/maple60/dem-twi-r/issues/new" class="toc-action"><i class="bi empty"></i>問題を報告</a></li></ul></div></div></div></footer><script>var lightboxQuarto = GLightbox({"closeEffect":"zoom","descPosition":"bottom","loop":false,"openEffect":"zoom","selector":".lightbox"});
+<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/maple60/dem-twi-r/edit/main/en/notebooks/topographic_wetness_index_qgis.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/maple60/dem-twi-r/blob/main/en/notebooks/topographic_wetness_index_qgis.qmd" class="toc-action"><i class="bi empty"></i>View source</a></li><li><a href="https://github.com/maple60/dem-twi-r/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></div></div></footer><script>var lightboxQuarto = GLightbox({"closeEffect":"zoom","descPosition":"bottom","loop":false,"openEffect":"zoom","selector":".lightbox"});
 (function() {
   let previousOnload = window.onload;
   window.onload = () => {

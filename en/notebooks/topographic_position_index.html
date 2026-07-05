@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml" lang="ja" xml:lang="ja"><head>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
 <meta name="generator" content="quarto-1.9.38">
@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>DEMからTWI/TPIを計算する</title>
+<title>Calculating the Topographic Position Index – DEMからTWI/TPIを計算する</title>
 <style>
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
@@ -61,23 +61,23 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </style>
 
 
-<script src="site_libs/quarto-nav/quarto-nav.js"></script>
-<script src="site_libs/quarto-nav/headroom.min.js"></script>
-<script src="site_libs/clipboard/clipboard.min.js"></script>
-<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
-<script src="site_libs/quarto-search/fuse.min.js"></script>
-<script src="site_libs/quarto-search/quarto-search.js"></script>
-<meta name="quarto:offset" content="./">
-<script src="site_libs/quarto-html/quarto.js" type="module"></script>
-<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
-<script src="site_libs/quarto-html/popper.min.js"></script>
-<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
-<script src="site_libs/quarto-html/anchor.min.js"></script>
-<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="site_libs/quarto-html/quarto-syntax-highlighting-15634bcf2e68342d4ad2dfa704d543f6.css" rel="stylesheet" id="quarto-text-highlighting-styles">
-<script src="site_libs/bootstrap/bootstrap.min.js"></script>
-<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="site_libs/bootstrap/bootstrap-bba5ebae505b5c03f3f0d8040a416a6b.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script src="../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../">
+<script src="../../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-15634bcf2e68342d4ad2dfa704d543f6.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../site_libs/bootstrap/bootstrap-bba5ebae505b5c03f3f0d8040a416a6b.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -92,20 +92,49 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   ],
   "show-item-context": false,
   "language": {
-    "search-no-results-text": "一致なし",
-    "search-matching-documents-text": "一致した文書",
-    "search-copy-link-title": "検索へのリンクをコピー",
-    "search-hide-matches-text": "追加の検索結果を非表示",
-    "search-more-match-text": "追加の検索結果",
-    "search-more-matches-text": "追加の検索結果",
-    "search-clear-button-title": "消去",
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
     "search-text-placeholder": "",
-    "search-detached-cancel-button-title": "取消",
-    "search-submit-button-title": "検索",
-    "search-label": "サーチ"
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
   }
 }</script>
 
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
 
 </head>
 
@@ -116,18 +145,18 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
       <div class="navbar-container container-fluid">
       <div class="navbar-brand-container mx-auto">
-    <a class="navbar-brand" href="./index.html">
+    <a class="navbar-brand" href="../../index.html">
     <span class="navbar-title">DEMからTWI/TPIを計算する</span>
     </a>
   </div>
-            <div id="quarto-search" class="" title="サーチ"></div>
-          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="ナビゲーションを切り替える" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
   <span class="navbar-toggler-icon"></span>
 </button>
           <div class="collapse navbar-collapse" id="navbarCollapse">
             <ul class="navbar-nav navbar-nav-scroll me-auto">
   <li class="nav-item">
-    <a class="nav-link active" href="./index.html" aria-current="page"> 
+    <a class="nav-link" href="../../index.html"> 
 <span class="menu-text">Home</span></a>
   </li>  
   <li class="nav-item dropdown ">
@@ -136,25 +165,25 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     </a>
     <ul class="dropdown-menu" aria-labelledby="nav-menu-notebooks">    
         <li>
-    <a class="dropdown-item" href="./notebooks/dem_download.html">
+    <a class="dropdown-item" href="../../notebooks/dem_download.html">
  <span class="dropdown-text">DEMデータの準備</span></a>
   </li>  
         <li>
-    <a class="dropdown-item" href="./notebooks/topographic_wetness_index.html">
+    <a class="dropdown-item" href="../../notebooks/topographic_wetness_index.html">
  <span class="dropdown-text">地形湿潤指数の計算</span></a>
   </li>  
         <li>
-    <a class="dropdown-item" href="./notebooks/topographic_position_index.html">
+    <a class="dropdown-item" href="../../notebooks/topographic_position_index.html">
  <span class="dropdown-text">地形位置指数の計算</span></a>
   </li>  
         <li>
-    <a class="dropdown-item" href="./notebooks/topographic_wetness_index_qgis.html">
+    <a class="dropdown-item" href="../../notebooks/topographic_wetness_index_qgis.html">
  <span class="dropdown-text">QGISによるTWIとTPIの計算</span></a>
   </li>  
     </ul>
   </li>
   <li class="nav-item">
-    <a class="nav-link" href="./app/"> 
+    <a class="nav-link" href="../../app/"> 
 <span class="menu-text">Shinylive App</span></a>
   </li>  
   <li class="nav-item">
@@ -162,7 +191,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span class="menu-text">TWI/TPI計算アプリ</span></a>
   </li>  
   <li class="nav-item">
-    <a class="nav-link" href="./en/index.html"> 
+    <a class="nav-link" href="../../en/index.html"> 
 <span class="menu-text">English</span></a>
   </li>  
 </ul>
@@ -183,23 +212,15 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
 <!-- sidebar -->
 <!-- margin-sidebar -->
-    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
-        <nav id="TOC" role="doc-toc" class="toc-active">
-    <h2 id="toc-title">目次</h2>
-   
-  <ul>
-  <li><a href="#notebooks" id="toc-notebooks" class="nav-link active" data-scroll-target="#notebooks">Notebooks</a></li>
-  <li><a href="#app" id="toc-app" class="nav-link" data-scroll-target="#app">App</a></li>
-  <li><a href="#その他" id="toc-その他" class="nav-link" data-scroll-target="#その他">その他</a></li>
-  </ul>
-<div class="toc-actions"><ul><li><a href="https://github.com/maple60/dem-twi-r/edit/main/index.qmd" class="toc-action"><i class="bi bi-github"></i>編集</a></li><li><a href="https://github.com/maple60/dem-twi-r/blob/main/index.qmd" class="toc-action"><i class="bi empty"></i>ソースコード</a></li><li><a href="https://github.com/maple60/dem-twi-r/issues/new" class="toc-action"><i class="bi empty"></i>問題を報告</a></li></ul></div></nav>
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
+        
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">DEMからTWI/TPIを計算する</h1>
+<h1 class="title">Calculating the Topographic Position Index</h1>
 </div>
 
 
@@ -216,43 +237,99 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
-<p>このサイトでは、DEM (数値標高モデル)から地形湿潤指数 (Topographic Wetness Index, TWI)や地形位置指数 (Topographic Position Index, TPI)をR実装する方法についてまとめました。</p>
-<p>英語版は上部の<strong>English</strong>タブ、または<a href="./en/index.html">English version</a>からアクセスできます。</p>
-<section id="notebooks" class="level2">
-<h2 class="anchored" data-anchor-id="notebooks">Notebooks</h2>
-<p>DEMデータの準備からTWI/TPIの計算まで、ノートブックでまとめました。 上部の<strong>Notebooks</strong>メニューもしくは以下のリンクからアクセスできます。</p>
-<ul>
-<li><a href="./notebooks/dem_download.html">DEMデータの準備 (未完成)</a></li>
-<li><a href="./notebooks/topographic_wetness_index.html">Rによる地形湿潤指数 (TWI)の計算</a></li>
-<li><a href="./notebooks/topographic_position_index.html">Rによる地形位置指数 (TPI)の計算</a></li>
-<li><a href="./notebooks/topographic_wetness_index_qgis.html">QGISによるTWIとTPIの計算</a></li>
-</ul>
-</section>
-<section id="app" class="level2">
-<h2 class="anchored" data-anchor-id="app">App</h2>
-<p><a href="https://shiny.posit.co/py/get-started/shinylive.html">Shinylive</a>という、静的サイト上でShinyアプリを動かす仕組みを使って、合成DEMによるTWIの概念デモを公開しています。 ページ上部の<strong>Shinylive App</strong>もしくは以下のリンクからアクセスできます。</p>
-<ul>
-<li><a href="app/">TWIの概念デモ</a></li>
-</ul>
-<p>WhiteboxToolsをShinyliveで動作させるのはどうやら難しそうだったので、完全なアプリケーションではありません。</p>
-<p>また、自分のDEMやサンプルデータを使ってTWIやTPIを計算するアプリケーションも公開しています。 ご興味があればお試しください。 ページ上部の<strong>TWI/TPI計算アプリ</strong>もしくは以下のリンクからアクセスできます。</p>
-<ul>
-<li><a href="https://maple60-dem-terrain-indices-app.share.connect.posit.cloud/">TWI/TPI計算</a></li>
-</ul>
-<p>こちらのアプリケーションは、<a href="https://posit.co/products/enterprise/connect-cloud">Posit connect cloud</a>というホスティングサービス上で動作しています。 コードは以下からご確認いただけます。</p>
-<ul>
-<li><a href="https://github.com/maple60/dem-terrain-indices-app">maple60/dem-terrain-indices-app</a></li>
-</ul>
-</section>
-<section id="その他" class="level2">
-<h2 class="anchored" data-anchor-id="その他">その他</h2>
-<p>もしコードを閲覧したり、自分で実行したりしたい場合は、右上のGitHubアイコンからリポジトリにアクセスできます。</p>
-<p>また、本リポジトリでは、Rのパッケージ管理に<a href="https://rstudio.github.io/renv/">renv</a>を使用しています。 リポジトリをクローンした後、Rコンソールで以下のコマンドを実行することで、必要なパッケージをインストールできます。</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># install.packages("renv") # まだインストールしていない場合</span></span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>renv<span class="sc">::</span><span class="fu">restore</span>()</span></code></pre></div><button title="コピー" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Note
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><a href="../../notebooks/topographic_position_index.html">Japanese version</a></p>
+</div>
+</div>
+<p>The Topographic Position Index (TPI) is an index for quantifying the local position of terrain. It is calculated as the difference between the elevation of a target cell and the mean elevation of its surrounding cells. Positive values indicate that the cell is higher than its surroundings, while negative values indicate that it is lower.</p>
+<p><span class="math display">\[
+TPI = elevation - mean elevation of surrounding cells
+\]</span></p>
+<p>Here, we calculate TPI from a DEM (Digital Elevation Model) with the R package <a href="https://rspatial.github.io/terra/index.html">terra</a>.</p>
+<p>The example uses sample data from the <a href="https://whiteboxr.gishub.org/index.html"><code>whitebox</code></a> package.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># install.packages("terra") # if terra is not installed yet</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="co"># renv::install("terra") # if you use renv</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="co"># install.packages("whitebox") # if whitebox is not installed yet</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="co"># renv::install("whitebox") # if you use renv</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(terra)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>terra 1.9.34</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(whitebox)</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>dem_path <span class="ot">&lt;-</span> <span class="fu">sample_dem_data</span>()</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>dem <span class="ot">&lt;-</span> <span class="fu">rast</span>(dem_path)</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(dem)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="topographic_position_index_files/figure-html/unnamed-chunk-1-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>After deciding how many surrounding cells to use for each elevation value, use <code>terra::focal()</code> to calculate the mean elevation of the neighboring cells. Here, we use a 3 x 3 window.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>w <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="dv">1</span>, <span class="at">nrow =</span> <span class="dv">3</span>, <span class="at">ncol =</span> <span class="dv">3</span>) <span class="co"># 3 x 3 window</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>w[<span class="dv">2</span>, <span class="dv">2</span>] <span class="ot">&lt;-</span> <span class="cn">NA</span> <span class="co"># exclude the center cell from the neighborhood mean</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>mean_neigh <span class="ot">&lt;-</span> <span class="fu">focal</span>(</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>  dem,</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">w =</span> w,</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">fun =</span> mean,</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">na.rm =</span> <span class="cn">TRUE</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>tpi_3_3 <span class="ot">&lt;-</span> dem <span class="sc">-</span> mean_neigh</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(tpi_3_3, <span class="at">main =</span> <span class="st">"TPI (3x3)"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="topographic_position_index_files/figure-html/unnamed-chunk-2-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Interpretation is as follows.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 30%">
+<col style="width: 70%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: right;">TPI</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">Positive</td>
+<td>Higher than the surroundings; closer to a ridge or convex landform</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">Around 0</td>
+<td>Similar to the surroundings</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">Negative</td>
+<td>Lower than the surroundings; closer to a valley or concave landform</td>
+</tr>
+</tbody>
+</table>
+<p>The spatial scale used for TPI should be chosen according to the purpose of the analysis.</p>
 
 
-</section>
 
 </main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
@@ -280,12 +357,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
       // flash "checked"
       button.classList.add('code-copy-button-checked');
       var currentTitle = button.getAttribute("title");
-      button.setAttribute("title", "コピーしました");
+      button.setAttribute("title", "Copied!");
       let tooltip;
       if (window.bootstrap) {
         button.setAttribute("data-bs-toggle", "tooltip");
         button.setAttribute("data-bs-placement", "left");
-        button.setAttribute("data-bs-title", "コピーしました");
+        button.setAttribute("data-bs-title", "Copied!");
         tooltip = new bootstrap.Tooltip(button, 
           { trigger: "manual", 
             customClass: "code-copy-button-tooltip",
@@ -660,4 +737,4 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 
 
-<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/maple60/dem-twi-r/edit/main/index.qmd" class="toc-action"><i class="bi bi-github"></i>編集</a></li><li><a href="https://github.com/maple60/dem-twi-r/blob/main/index.qmd" class="toc-action"><i class="bi empty"></i>ソースコード</a></li><li><a href="https://github.com/maple60/dem-twi-r/issues/new" class="toc-action"><i class="bi empty"></i>問題を報告</a></li></ul></div></div></div></footer></body></html>
+<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions"><ul><li><a href="https://github.com/maple60/dem-twi-r/edit/main/en/notebooks/topographic_position_index.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/maple60/dem-twi-r/blob/main/en/notebooks/topographic_position_index.qmd" class="toc-action"><i class="bi empty"></i>View source</a></li><li><a href="https://github.com/maple60/dem-twi-r/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></div></div></footer></body></html>

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml" lang="ja" xml:lang="ja"><head>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
 <meta name="generator" content="quarto-1.9.38">
@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>地形湿潤指数の計算 – DEMからTWI/TPIを計算する</title>
+<title>Calculating the Topographic Wetness Index – DEMからTWI/TPIを計算する</title>
 <style>
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
@@ -61,23 +61,23 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </style>
 
 
-<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
-<script src="../site_libs/quarto-nav/headroom.min.js"></script>
-<script src="../site_libs/clipboard/clipboard.min.js"></script>
-<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
-<script src="../site_libs/quarto-search/fuse.min.js"></script>
-<script src="../site_libs/quarto-search/quarto-search.js"></script>
-<meta name="quarto:offset" content="../">
-<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
-<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
-<script src="../site_libs/quarto-html/popper.min.js"></script>
-<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
-<script src="../site_libs/quarto-html/anchor.min.js"></script>
-<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-15634bcf2e68342d4ad2dfa704d543f6.css" rel="stylesheet" id="quarto-text-highlighting-styles">
-<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
-<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-bba5ebae505b5c03f3f0d8040a416a6b.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script src="../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../">
+<script src="../../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-15634bcf2e68342d4ad2dfa704d543f6.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../site_libs/bootstrap/bootstrap-bba5ebae505b5c03f3f0d8040a416a6b.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -92,22 +92,22 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   ],
   "show-item-context": false,
   "language": {
-    "search-no-results-text": "一致なし",
-    "search-matching-documents-text": "一致した文書",
-    "search-copy-link-title": "検索へのリンクをコピー",
-    "search-hide-matches-text": "追加の検索結果を非表示",
-    "search-more-match-text": "追加の検索結果",
-    "search-more-matches-text": "追加の検索結果",
-    "search-clear-button-title": "消去",
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
     "search-text-placeholder": "",
-    "search-detached-cancel-button-title": "取消",
-    "search-submit-button-title": "検索",
-    "search-label": "サーチ"
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
   }
 }</script>
-<script src="../site_libs/quarto-diagram/mermaid.min.js"></script>
-<script src="../site_libs/quarto-diagram/mermaid-init.js"></script>
-<link href="../site_libs/quarto-diagram/mermaid.css" rel="stylesheet">
+<script src="../../site_libs/quarto-diagram/mermaid.min.js"></script>
+<script src="../../site_libs/quarto-diagram/mermaid-init.js"></script>
+<link href="../../site_libs/quarto-diagram/mermaid.css" rel="stylesheet">
 
 
 </head>
@@ -119,18 +119,18 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
       <div class="navbar-container container-fluid">
       <div class="navbar-brand-container mx-auto">
-    <a class="navbar-brand" href="../index.html">
+    <a class="navbar-brand" href="../../index.html">
     <span class="navbar-title">DEMからTWI/TPIを計算する</span>
     </a>
   </div>
-            <div id="quarto-search" class="" title="サーチ"></div>
-          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="ナビゲーションを切り替える" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
   <span class="navbar-toggler-icon"></span>
 </button>
           <div class="collapse navbar-collapse" id="navbarCollapse">
             <ul class="navbar-nav navbar-nav-scroll me-auto">
   <li class="nav-item">
-    <a class="nav-link" href="../index.html"> 
+    <a class="nav-link" href="../../index.html"> 
 <span class="menu-text">Home</span></a>
   </li>  
   <li class="nav-item dropdown ">
@@ -139,25 +139,25 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     </a>
     <ul class="dropdown-menu" aria-labelledby="nav-menu-notebooks">    
         <li>
-    <a class="dropdown-item" href="../notebooks/dem_download.html">
+    <a class="dropdown-item" href="../../notebooks/dem_download.html">
  <span class="dropdown-text">DEMデータの準備</span></a>
   </li>  
         <li>
-    <a class="dropdown-item" href="../notebooks/topographic_wetness_index.html">
+    <a class="dropdown-item" href="../../notebooks/topographic_wetness_index.html">
  <span class="dropdown-text">地形湿潤指数の計算</span></a>
   </li>  
         <li>
-    <a class="dropdown-item" href="../notebooks/topographic_position_index.html">
+    <a class="dropdown-item" href="../../notebooks/topographic_position_index.html">
  <span class="dropdown-text">地形位置指数の計算</span></a>
   </li>  
         <li>
-    <a class="dropdown-item" href="../notebooks/topographic_wetness_index_qgis.html">
+    <a class="dropdown-item" href="../../notebooks/topographic_wetness_index_qgis.html">
  <span class="dropdown-text">QGISによるTWIとTPIの計算</span></a>
   </li>  
     </ul>
   </li>
   <li class="nav-item">
-    <a class="nav-link" href="../app/"> 
+    <a class="nav-link" href="../../app/"> 
 <span class="menu-text">Shinylive App</span></a>
   </li>  
   <li class="nav-item">
@@ -165,7 +165,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span class="menu-text">TWI/TPI計算アプリ</span></a>
   </li>  
   <li class="nav-item">
-    <a class="nav-link" href="../en/index.html"> 
+    <a class="nav-link" href="../../en/index.html"> 
 <span class="menu-text">English</span></a>
   </li>  
 </ul>
@@ -188,26 +188,26 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <!-- margin-sidebar -->
     <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
         <nav id="TOC" role="doc-toc" class="toc-active">
-    <h2 id="toc-title">目次</h2>
+    <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#概要" id="toc-概要" class="nav-link active" data-scroll-target="#概要">概要</a></li>
-  <li><a href="#解析の流れ" id="toc-解析の流れ" class="nav-link" data-scroll-target="#解析の流れ">解析の流れ</a></li>
-  <li><a href="#セットアップ" id="toc-セットアップ" class="nav-link" data-scroll-target="#セットアップ">セットアップ</a></li>
-  <li><a href="#demの読み込みと可視化" id="toc-demの読み込みと可視化" class="nav-link" data-scroll-target="#demの読み込みと可視化">DEMの読み込みと可視化</a></li>
+  <li><a href="#overview" id="toc-overview" class="nav-link active" data-scroll-target="#overview">Overview</a></li>
+  <li><a href="#workflow" id="toc-workflow" class="nav-link" data-scroll-target="#workflow">Workflow</a></li>
+  <li><a href="#setup" id="toc-setup" class="nav-link" data-scroll-target="#setup">Setup</a></li>
+  <li><a href="#read-and-visualize-the-dem" id="toc-read-and-visualize-the-dem" class="nav-link" data-scroll-target="#read-and-visualize-the-dem">Read and visualize the DEM</a></li>
   <li><a href="#depression-breaching" id="toc-depression-breaching" class="nav-link" data-scroll-target="#depression-breaching">Depression breaching</a></li>
-  <li><a href="#flow-accumulation" id="toc-flow-accumulation" class="nav-link" data-scroll-target="#flow-accumulation">Flow Accumulation</a></li>
+  <li><a href="#flow-accumulation" id="toc-flow-accumulation" class="nav-link" data-scroll-target="#flow-accumulation">Flow accumulation</a></li>
   <li><a href="#slope" id="toc-slope" class="nav-link" data-scroll-target="#slope">Slope</a></li>
   <li><a href="#twi-topographic-wetness-index" id="toc-twi-topographic-wetness-index" class="nav-link" data-scroll-target="#twi-topographic-wetness-index">TWI (Topographic Wetness Index)</a></li>
   </ul>
-<div class="toc-actions"><ul><li><a href="https://github.com/maple60/dem-twi-r/edit/main/notebooks/topographic_wetness_index.qmd" class="toc-action"><i class="bi bi-github"></i>編集</a></li><li><a href="https://github.com/maple60/dem-twi-r/blob/main/notebooks/topographic_wetness_index.qmd" class="toc-action"><i class="bi empty"></i>ソースコード</a></li><li><a href="https://github.com/maple60/dem-twi-r/issues/new" class="toc-action"><i class="bi empty"></i>問題を報告</a></li></ul></div></nav>
+<div class="toc-actions"><ul><li><a href="https://github.com/maple60/dem-twi-r/edit/main/en/notebooks/topographic_wetness_index.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/maple60/dem-twi-r/blob/main/en/notebooks/topographic_wetness_index.qmd" class="toc-action"><i class="bi empty"></i>View source</a></li><li><a href="https://github.com/maple60/dem-twi-r/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">地形湿潤指数の計算</h1>
+<h1 class="title">Calculating the Topographic Wetness Index</h1>
 </div>
 
 
@@ -224,23 +224,36 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
-<section id="概要" class="level2">
-<h2 class="anchored" data-anchor-id="概要">概要</h2>
-<p><a href="https://whiteboxr.gishub.org/index.html"><code>whitebox</code></a>というRパッケージを使って、DEM (デジタル標高モデル)から地形湿潤指数 (Topographic Wetness Index, TWI)を計算する方法を示します。</p>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Note
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><a href="../../notebooks/topographic_wetness_index.html">Japanese version</a></p>
+</div>
+</div>
+<section id="overview" class="level2">
+<h2 class="anchored" data-anchor-id="overview">Overview</h2>
+<p>This notebook shows how to calculate the Topographic Wetness Index (TWI) from a DEM (digital elevation model) with the R package <a href="https://whiteboxr.gishub.org/index.html"><code>whitebox</code></a>.</p>
 </section>
-<section id="解析の流れ" class="level2">
-<h2 class="anchored" data-anchor-id="解析の流れ">解析の流れ</h2>
-<p>解析の流れは以下のようになります。</p>
+<section id="workflow" class="level2">
+<h2 class="anchored" data-anchor-id="workflow">Workflow</h2>
+<p>The workflow is as follows.</p>
 <div class="cell" data-layout-align="default">
 <div class="cell-output-display">
 <div>
 <p></p><figure class="figure"><p></p>
 <div>
 <pre class="mermaid mermaid-js">graph TD
-    A[DEMの読み込み] --&gt; B[Depression breaching]
-    B --&gt; C[Flow Accumulationの計算]
-    C --&gt; D[傾斜の計算]
-    D --&gt; E[TWIの計算]
+    A[Read DEM] --&gt; B[Depression breaching]
+    B --&gt; C[Calculate flow accumulation]
+    C --&gt; D[Calculate slope]
+    D --&gt; E[Calculate TWI]
 </pre>
 </div>
 <p></p></figure><p></p>
@@ -248,24 +261,24 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </section>
-<section id="セットアップ" class="level2">
-<h2 class="anchored" data-anchor-id="セットアップ">セットアップ</h2>
-<p>初めてwhiteboxを使用する場合は、以下のコードを実行して、<a href="https://www.whiteboxgeo.com/">WhiteboxTools</a>をインストールしてください。 Rで直接計算をするわけではなく、外部のWhiteboxToolsを使用して計算が行われます。 つまり、RはWhiteboxToolsを呼び出すためのインターフェースとして機能します。</p>
+<section id="setup" class="level2">
+<h2 class="anchored" data-anchor-id="setup">Setup</h2>
+<p>If this is your first time using <code>whitebox</code>, run the following code to install <a href="https://www.whiteboxgeo.com/">WhiteboxTools</a>. The calculation itself is performed by the external WhiteboxTools executable; R works as an interface to call it.</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># 初回だけ必要に応じて実行する</span></span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Run only once if needed</span></span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="co"># renv::install("terra")</span></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="co"># renv::install("whitebox")</span></span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>whitebox<span class="sc">::</span><span class="fu">install_whitebox</span>()</span></code></pre></div><button title="コピー" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>whitebox<span class="sc">::</span><span class="fu">install_whitebox</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<p>ライブラリを読み込みます。 <a href="https://rspatial.github.io/terra/index.html"><code>terra</code></a>パッケージは、ラスターデータの操作に使用します。 <a href="https://whiteboxr.gishub.org/index.html"><code>whitebox</code></a>パッケージは、WhiteboxToolsをRから呼び出すために使用します。</p>
+<p>Load the libraries. The <a href="https://rspatial.github.io/terra/index.html"><code>terra</code></a> package is used for raster data handling. The <a href="https://whiteboxr.gishub.org/index.html"><code>whitebox</code></a> package is used to call WhiteboxTools from R.</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(terra)</span></code></pre></div><button title="コピー" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(terra)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stderr">
 <pre><code>terra 1.9.34</code></pre>
 </div>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(whitebox)</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="co"># WhiteboxTools の実行可能ファイルのパスを取得し、存在を確認</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Get the WhiteboxTools executable path and confirm that it exists</span></span>
 <span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>wbt_path <span class="ot">&lt;-</span> <span class="fu">wbt_exe_path</span>(<span class="at">shell_quote =</span> <span class="cn">FALSE</span>)</span>
 <span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span>whitebox<span class="sc">::</span><span class="fu">check_whitebox_binary</span>()) {</span>
 <span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(</span>
@@ -277,25 +290,25 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>  )</span>
 <span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>}</span>
 <span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a><span class="co"># WhiteboxToolsのパスとバージョンを確認</span></span>
-<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>wbt_path</span></code></pre></div><button title="コピー" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a><span class="co"># Check the WhiteboxTools path and version</span></span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>wbt_path</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] "/home/runner/.local/share/R/whitebox/WBT/whitebox_tools"</code></pre>
 </div>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>whitebox<span class="sc">::</span><span class="fu">wbt_version</span>()</span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="co"># 出力ディレクトリの作成</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Create the output directory</span></span>
 <span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>output_dir <span class="ot">&lt;-</span> <span class="st">"output"</span></span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="fu">dir.create</span>(output_dir, <span class="at">showWarnings =</span> <span class="cn">FALSE</span>)</span></code></pre></div><button title="コピー" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="fu">dir.create</span>(output_dir, <span class="at">showWarnings =</span> <span class="cn">FALSE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </section>
-<section id="demの読み込みと可視化" class="level2">
-<h2 class="anchored" data-anchor-id="demの読み込みと可視化">DEMの読み込みと可視化</h2>
-<p>今回は、<code>whitebox</code>パッケージのサンプルデータを使用して解析を行います。</p>
+<section id="read-and-visualize-the-dem" class="level2">
+<h2 class="anchored" data-anchor-id="read-and-visualize-the-dem">Read and visualize the DEM</h2>
+<p>This example uses sample data from the <code>whitebox</code> package.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>dem_path <span class="ot">&lt;-</span> <span class="fu">sample_dem_data</span>()</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>dem <span class="ot">&lt;-</span> <span class="fu">rast</span>(dem_path)</span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(dem)</span></code></pre></div><button title="コピー" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(dem)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>class       : SpatRaster
 size        : 188, 237, 1  (nrow, ncol, nlyr)
@@ -307,8 +320,8 @@ name        :         DEM
 min value   :  212.229813
 max value   : 1232.878296</code></pre>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># 可視化</span></span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(dem, <span class="at">axes =</span> <span class="cn">FALSE</span>, <span class="at">main =</span> <span class="st">"DEM (Original)"</span>)</span></code></pre></div><button title="コピー" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Visualization</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(dem, <span class="at">axes =</span> <span class="cn">FALSE</span>, <span class="at">main =</span> <span class="st">"DEM (Original)"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
@@ -323,35 +336,35 @@ max value   : 1232.878296</code></pre>
 <i class="callout-icon"></i>
 </div>
 <div class="callout-title-container flex-fill">
-<span class="screen-reader-only">重要</span>座標系
+<span class="screen-reader-only">Important</span>Coordinate Reference System
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>座標系は必ず投影座標系（Projected Coordinate System）である必要があります。 地理座標系（Geographic Coordinate System）では、距離や面積の計算が正確に行えないため、TWIの計算結果が不正確になる可能性があります。</p>
-<p>以下のコードで座標系が設定されているかどうか、投影座標かどうかを確認できます。</p>
+<p>The DEM must use a projected coordinate reference system. If it uses a geographic coordinate reference system, distance and area calculations are not accurate, and the resulting TWI may be unreliable.</p>
+<p>The following code checks whether the CRS is set and whether it is projected.</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co"># 座標系の確認</span></span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Check the coordinate reference system</span></span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">nzchar</span>(<span class="fu">crs</span>(dem))) {</span>
 <span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">"DEM has no coordinate reference system."</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
 <span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a><span class="co"># 投影座標系かどうかの確認</span></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Check whether the DEM uses a projected coordinate reference system</span></span>
 <span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">isTRUE</span>(<span class="fu">is.lonlat</span>(dem))) {</span>
 <span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stop</span>(<span class="st">"DEM must use a projected coordinate reference system."</span>, <span class="at">call. =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="コピー" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
 </section>
 <section id="depression-breaching" class="level2">
 <h2 class="anchored" data-anchor-id="depression-breaching">Depression breaching</h2>
-<p>最初に、DEMの凹地を除去するために、Depression breachingを行います。 この処理は、流域解析の前処理として重要です。</p>
-<p><code>wbt_breach_depressions_least_cost()</code>関数を使用することで、depression breachingを行うことができます。 必要な引数は以下の通りです。</p>
+<p>First, run depression breaching to remove depressions from the DEM. This is an important preprocessing step for hydrological terrain analysis.</p>
+<p>The <code>wbt_breach_depressions_least_cost()</code> function performs depression breaching. The required arguments are:</p>
 <ul>
-<li><code>dem</code>: 入力DEMのファイルパス</li>
-<li><code>output</code>: 出力ファイルのパス</li>
-<li><code>dist</code>: 凹地を除去するための距離（単位はDEMの座標系に依存します）</li>
+<li><code>dem</code>: file path to the input DEM</li>
+<li><code>output</code>: file path for the output raster</li>
+<li><code>dist</code>: search distance for removing depressions; the unit depends on the DEM coordinate system</li>
 </ul>
-<p><code>fill</code>はデフォルトで<code>TRUE</code>に設定されており、depression breaching後のDEMの凹地を埋める処理を行います。 基本的には<code>fill = TRUE</code>のままで問題なさそうです。</p>
+<p>The <code>fill</code> argument is <code>TRUE</code> by default, which fills unresolved depressions after breaching. In most cases, leaving <code>fill = TRUE</code> should be fine.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="fu">wbt_breach_depressions_least_cost</span>(</span>
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">dem =</span> dem_path,</span>
@@ -359,11 +372,11 @@ max value   : 1232.878296</code></pre>
 <span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">dist =</span> <span class="dv">20</span>,</span>
 <span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">fill =</span> <span class="cn">TRUE</span></span>
 <span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>dem_breached <span class="ot">&lt;-</span> <span class="fu">rast</span>(<span class="fu">file.path</span>(output_dir, <span class="st">"dem_breached.tif"</span>))</span></code></pre></div><button title="コピー" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>dem_breached <span class="ot">&lt;-</span> <span class="fu">rast</span>(<span class="fu">file.path</span>(output_dir, <span class="st">"dem_breached.tif"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<p>元のDEMと比較します。</p>
+<p>Compare the breached DEM with the original DEM.</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co"># breached DEMと元のDEMを比較する</span></span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Compare the breached DEM with the original DEM</span></span>
 <span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="fu">local</span>({</span>
 <span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>  old_mar <span class="ot">&lt;-</span> <span class="fu">par</span>(<span class="st">"mar"</span>)</span>
 <span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">on.exit</span>(<span class="fu">par</span>(<span class="at">mar =</span> old_mar), <span class="at">add =</span> <span class="cn">TRUE</span>)</span>
@@ -376,7 +389,7 @@ max value   : 1232.878296</code></pre>
 <span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">axes =</span> <span class="cn">FALSE</span>,</span>
 <span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">main =</span> <span class="st">"Difference (Original - Breached)"</span></span>
 <span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a>})</span></code></pre></div><button title="コピー" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a>})</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
@@ -399,11 +412,11 @@ max value   : 1232.878296</code></pre>
 </div>
 </div>
 </div>
-<p>今回のデータでは、凹地の除去による標高の変化はほとんどありませんでした。</p>
+<p>In this sample data, elevation changes caused by depression breaching were very small.</p>
 </section>
 <section id="flow-accumulation" class="level2">
-<h2 class="anchored" data-anchor-id="flow-accumulation">Flow Accumulation</h2>
-<p>次に、flow accumulationを計算します。 これは、水流の蓄積量を計算する処理です。</p>
+<h2 class="anchored" data-anchor-id="flow-accumulation">Flow accumulation</h2>
+<p>Next, calculate flow accumulation. This step estimates how much upslope contributing area flows into each cell.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="fu">wbt_d8_flow_accumulation</span>(</span>
 <span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">input =</span> <span class="fu">file.path</span>(output_dir, <span class="st">"dem_breached.tif"</span>),</span>
@@ -415,7 +428,7 @@ max value   : 1232.878296</code></pre>
 <span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>  output_dir,</span>
 <span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>  <span class="st">"d8_accum.tif"</span></span>
 <span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>))</span>
-<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(dem_breached_d8_accum, <span class="at">axes =</span> <span class="cn">FALSE</span>, <span class="at">main =</span> <span class="st">"Flow Accumulation (D8)"</span>)</span></code></pre></div><button title="コピー" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(dem_breached_d8_accum, <span class="at">axes =</span> <span class="cn">FALSE</span>, <span class="at">main =</span> <span class="st">"Flow Accumulation (D8)"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
@@ -424,12 +437,12 @@ max value   : 1232.878296</code></pre>
 </div>
 </div>
 </div>
-<p>これはD8アルゴリズムを使用して流域の蓄積量を計算します。 <code>out_type = "specific contributing area"</code>は、比集水面積（単位幅あたりの寄与集水面積）を出力することを意味します。</p>
-<p>ほかには、D-infinity flow accumulationを計算する<code>wbt_d_inf_flow_accumulation()</code>関数、FD8 flow accumulationを計算する<code>wbt_fd8_flow_accumulation()</code>関数などもあります。 私もまだ勉強中ですが、解析によって使い分ける必要があるようです。</p>
+<p>This calculates flow accumulation with the D8 algorithm. <code>out_type = "specific contributing area"</code> means that the output is specific catchment area, or contributing area per unit contour width.</p>
+<p>Other options include <code>wbt_d_inf_flow_accumulation()</code> for D-infinity flow accumulation and <code>wbt_fd8_flow_accumulation()</code> for FD8 flow accumulation. I am still learning the details, but the appropriate method appears to depend on the analysis.</p>
 </section>
 <section id="slope" class="level2">
 <h2 class="anchored" data-anchor-id="slope">Slope</h2>
-<p>次に、傾斜を計算します。 <code>wbt_slope()</code>関数を使用して、DEMから傾斜を計算します。</p>
+<p>Next, calculate slope from the DEM with <code>wbt_slope()</code>.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="fu">wbt_slope</span>(</span>
 <span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">dem =</span> <span class="fu">file.path</span>(output_dir, <span class="st">"dem_breached.tif"</span>),</span>
@@ -440,7 +453,7 @@ max value   : 1232.878296</code></pre>
 <span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>  output_dir,</span>
 <span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>  <span class="st">"d8_slope.tif"</span></span>
 <span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>))</span>
-<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(dem_breached_slope, <span class="at">axes =</span> <span class="cn">FALSE</span>, <span class="at">main =</span> <span class="st">"Slope (degrees)"</span>)</span></code></pre></div><button title="コピー" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(dem_breached_slope, <span class="at">axes =</span> <span class="cn">FALSE</span>, <span class="at">main =</span> <span class="st">"Slope (degrees)"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
@@ -452,7 +465,7 @@ max value   : 1232.878296</code></pre>
 </section>
 <section id="twi-topographic-wetness-index" class="level2">
 <h2 class="anchored" data-anchor-id="twi-topographic-wetness-index">TWI (Topographic Wetness Index)</h2>
-<p>TWIを計算するには、<code>wbt_wetness_index()</code>関数を使用します。この関数は、流域の蓄積量と傾斜を入力として受け取り、TWIを計算します。</p>
+<p>Use <code>wbt_wetness_index()</code> to calculate TWI. This function takes flow accumulation and slope rasters as inputs and calculates the Topographic Wetness Index.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="fu">wbt_wetness_index</span>(</span>
 <span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">sca =</span> <span class="fu">file.path</span>(output_dir, <span class="st">"d8_accum.tif"</span>),</span>
@@ -461,7 +474,7 @@ max value   : 1232.878296</code></pre>
 <span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>)</span>
 <span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>twi <span class="ot">&lt;-</span> <span class="fu">rast</span>(<span class="fu">file.path</span>(output_dir, <span class="st">"d8_twi.tif"</span>))</span>
 <span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(twi, <span class="at">axes =</span> <span class="cn">FALSE</span>, <span class="at">main =</span> <span class="st">"TWI (Topographic Wetness Index)"</span>)</span></code></pre></div><button title="コピー" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(twi, <span class="at">axes =</span> <span class="cn">FALSE</span>, <span class="at">main =</span> <span class="st">"TWI (Topographic Wetness Index)"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
@@ -500,12 +513,12 @@ max value   : 1232.878296</code></pre>
       // flash "checked"
       button.classList.add('code-copy-button-checked');
       var currentTitle = button.getAttribute("title");
-      button.setAttribute("title", "コピーしました");
+      button.setAttribute("title", "Copied!");
       let tooltip;
       if (window.bootstrap) {
         button.setAttribute("data-bs-toggle", "tooltip");
         button.setAttribute("data-bs-placement", "left");
-        button.setAttribute("data-bs-title", "コピーしました");
+        button.setAttribute("data-bs-title", "Copied!");
         tooltip = new bootstrap.Tooltip(button, 
           { trigger: "manual", 
             customClass: "code-copy-button-tooltip",
@@ -880,4 +893,4 @@ max value   : 1232.878296</code></pre>
 
 
 
-<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/maple60/dem-twi-r/edit/main/notebooks/topographic_wetness_index.qmd" class="toc-action"><i class="bi bi-github"></i>編集</a></li><li><a href="https://github.com/maple60/dem-twi-r/blob/main/notebooks/topographic_wetness_index.qmd" class="toc-action"><i class="bi empty"></i>ソースコード</a></li><li><a href="https://github.com/maple60/dem-twi-r/issues/new" class="toc-action"><i class="bi empty"></i>問題を報告</a></li></ul></div></div></div></footer></body></html>
+<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/maple60/dem-twi-r/edit/main/en/notebooks/topographic_wetness_index.qmd" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/maple60/dem-twi-r/blob/main/en/notebooks/topographic_wetness_index.qmd" class="toc-action"><i class="bi empty"></i>View source</a></li><li><a href="https://github.com/maple60/dem-twi-r/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></div></div></footer></body></html>

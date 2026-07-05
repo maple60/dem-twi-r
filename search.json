@@ -1,5 +1,327 @@
 [
   {
+    "objectID": "en/index.html",
+    "href": "en/index.html",
+    "title": "Calculating TWI/TPI from DEMs",
+    "section": "",
+    "text": "This site summarizes how to calculate the Topographic Wetness Index (TWI) and Topographic Position Index (TPI) from DEMs (digital elevation models), mainly with R."
+  },
+  {
+    "objectID": "en/index.html#notebooks",
+    "href": "en/index.html#notebooks",
+    "title": "Calculating TWI/TPI from DEMs",
+    "section": "Notebooks",
+    "text": "Notebooks\nThe notebooks cover the workflow from preparing DEM data to calculating TWI and TPI. Use the English tab in the navigation bar, or the links below.\n\nPreparing DEM data\nCalculating the Topographic Wetness Index (TWI) with R\nCalculating the Topographic Position Index (TPI) with R\nCalculating TWI and TPI with QGIS"
+  },
+  {
+    "objectID": "en/index.html#app",
+    "href": "en/index.html#app",
+    "title": "Calculating TWI/TPI from DEMs",
+    "section": "App",
+    "text": "App\nThe site also includes a conceptual TWI demo built with Shinylive, which runs a Shiny app on a static website. Use Shinylive App in the navigation bar, or open the link below.\n\nConceptual TWI demo\n\nRunning WhiteboxTools in Shinylive appears to be difficult, so this is not a full application.\nA separate hosted application is available for calculating TWI and TPI from your own DEM or sample data. Use TWI/TPI calculation app in the navigation bar, or open the link below.\n\nTWI/TPI calculation app\n\nThe application runs on Posit Connect Cloud. Its source code is available here:\n\nmaple60/dem-terrain-indices-app"
+  },
+  {
+    "objectID": "en/index.html#other-notes",
+    "href": "en/index.html#other-notes",
+    "title": "Calculating TWI/TPI from DEMs",
+    "section": "Other Notes",
+    "text": "Other Notes\nTo view or run the code locally, use the GitHub icon in the upper-right corner to open the repository.\nThis repository uses renv for R package management. After cloning the repository, run the following command in an R console to install the required packages.\n# install.packages(\"renv\") # if renv is not installed yet\nrenv::restore()"
+  },
+  {
+    "objectID": "notebooks/topographic_wetness_index.html",
+    "href": "notebooks/topographic_wetness_index.html",
+    "title": "地形湿潤指数の計算",
+    "section": "",
+    "text": "whiteboxというRパッケージを使って、DEM (デジタル標高モデル)から地形湿潤指数 (Topographic Wetness Index, TWI)を計算する方法を示します。"
+  },
+  {
+    "objectID": "notebooks/topographic_wetness_index.html#概要",
+    "href": "notebooks/topographic_wetness_index.html#概要",
+    "title": "地形湿潤指数の計算",
+    "section": "",
+    "text": "whiteboxというRパッケージを使って、DEM (デジタル標高モデル)から地形湿潤指数 (Topographic Wetness Index, TWI)を計算する方法を示します。"
+  },
+  {
+    "objectID": "notebooks/topographic_wetness_index.html#解析の流れ",
+    "href": "notebooks/topographic_wetness_index.html#解析の流れ",
+    "title": "地形湿潤指数の計算",
+    "section": "解析の流れ",
+    "text": "解析の流れ\n解析の流れは以下のようになります。\n\n\n\n\n\ngraph TD\n    A[DEMの読み込み] --&gt; B[Depression breaching]\n    B --&gt; C[Flow Accumulationの計算]\n    C --&gt; D[傾斜の計算]\n    D --&gt; E[TWIの計算]"
+  },
+  {
+    "objectID": "notebooks/topographic_wetness_index.html#セットアップ",
+    "href": "notebooks/topographic_wetness_index.html#セットアップ",
+    "title": "地形湿潤指数の計算",
+    "section": "セットアップ",
+    "text": "セットアップ\n初めてwhiteboxを使用する場合は、以下のコードを実行して、WhiteboxToolsをインストールしてください。 Rで直接計算をするわけではなく、外部のWhiteboxToolsを使用して計算が行われます。 つまり、RはWhiteboxToolsを呼び出すためのインターフェースとして機能します。\n\n# 初回だけ必要に応じて実行する\n# renv::install(\"terra\")\n# renv::install(\"whitebox\")\nwhitebox::install_whitebox()\n\nライブラリを読み込みます。 terraパッケージは、ラスターデータの操作に使用します。 whiteboxパッケージは、WhiteboxToolsをRから呼び出すために使用します。\n\nlibrary(terra)\n\nterra 1.9.34\n\nlibrary(whitebox)\n\n# WhiteboxTools の実行可能ファイルのパスを取得し、存在を確認\nwbt_path &lt;- wbt_exe_path(shell_quote = FALSE)\nif (!whitebox::check_whitebox_binary()) {\n  stop(\n    \"WhiteboxTools executable was not found: \",\n    wbt_path,\n    \"\\n\",\n    \"Run whitebox::install_whitebox() once, then rerun this notebook.\",\n    call. = FALSE\n  )\n}\n\n# WhiteboxToolsのパスとバージョンを確認\nwbt_path\n\n[1] \"/home/runner/.local/share/R/whitebox/WBT/whitebox_tools\"\n\nwhitebox::wbt_version()\n\n# 出力ディレクトリの作成\noutput_dir &lt;- \"output\"\ndir.create(output_dir, showWarnings = FALSE)"
+  },
+  {
+    "objectID": "notebooks/topographic_wetness_index.html#demの読み込みと可視化",
+    "href": "notebooks/topographic_wetness_index.html#demの読み込みと可視化",
+    "title": "地形湿潤指数の計算",
+    "section": "DEMの読み込みと可視化",
+    "text": "DEMの読み込みと可視化\n今回は、whiteboxパッケージのサンプルデータを使用して解析を行います。\n\ndem_path &lt;- sample_dem_data()\ndem &lt;- rast(dem_path)\nprint(dem)\n\nclass       : SpatRaster\nsize        : 188, 237, 1  (nrow, ncol, nlyr)\nresolution  : 90, 90  (x, y)\nextent      : 664692, 686022, 4878904, 4895824  (xmin, xmax, ymin, ymax)\ncoord. ref. : NAD83 / UTM zone 18N (EPSG:26918)\nsource      : DEM.tif\nname        :         DEM\nmin value   :  212.229813\nmax value   : 1232.878296\n\n# 可視化\nplot(dem, axes = FALSE, main = \"DEM (Original)\")\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n重要座標系\n\n\n\n座標系は必ず投影座標系（Projected Coordinate System）である必要があります。 地理座標系（Geographic Coordinate System）では、距離や面積の計算が正確に行えないため、TWIの計算結果が不正確になる可能性があります。\n以下のコードで座標系が設定されているかどうか、投影座標かどうかを確認できます。\n\n# 座標系の確認\nif (!nzchar(crs(dem))) {\n  stop(\"DEM has no coordinate reference system.\", call. = FALSE)\n}\n# 投影座標系かどうかの確認\nif (isTRUE(is.lonlat(dem))) {\n  stop(\"DEM must use a projected coordinate reference system.\", call. = FALSE)\n}"
+  },
+  {
+    "objectID": "notebooks/topographic_wetness_index.html#depression-breaching",
+    "href": "notebooks/topographic_wetness_index.html#depression-breaching",
+    "title": "地形湿潤指数の計算",
+    "section": "Depression breaching",
+    "text": "Depression breaching\n最初に、DEMの凹地を除去するために、Depression breachingを行います。 この処理は、流域解析の前処理として重要です。\nwbt_breach_depressions_least_cost()関数を使用することで、depression breachingを行うことができます。 必要な引数は以下の通りです。\n\ndem: 入力DEMのファイルパス\noutput: 出力ファイルのパス\ndist: 凹地を除去するための距離（単位はDEMの座標系に依存します）\n\nfillはデフォルトでTRUEに設定されており、depression breaching後のDEMの凹地を埋める処理を行います。 基本的にはfill = TRUEのままで問題なさそうです。\n\nwbt_breach_depressions_least_cost(\n  dem = dem_path,\n  output = file.path(output_dir, \"dem_breached.tif\"),\n  dist = 20,\n  fill = TRUE\n)\ndem_breached &lt;- rast(file.path(output_dir, \"dem_breached.tif\"))\n\n元のDEMと比較します。\n\n# breached DEMと元のDEMを比較する\nlocal({\n  old_mar &lt;- par(\"mar\")\n  on.exit(par(mar = old_mar), add = TRUE)\n\n  par(mar = c(2, 1, 2, 1))\n  plot(dem, axes = FALSE, main = \"DEM (Original)\")\n  plot(dem_breached, axes = FALSE, main = \"DEM (Breached Depressions)\")\n  plot(\n    dem - dem_breached,\n    axes = FALSE,\n    main = \"Difference (Original - Breached)\"\n  )\n})\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n今回のデータでは、凹地の除去による標高の変化はほとんどありませんでした。"
+  },
+  {
+    "objectID": "notebooks/topographic_wetness_index.html#flow-accumulation",
+    "href": "notebooks/topographic_wetness_index.html#flow-accumulation",
+    "title": "地形湿潤指数の計算",
+    "section": "Flow Accumulation",
+    "text": "Flow Accumulation\n次に、flow accumulationを計算します。 これは、水流の蓄積量を計算する処理です。\n\nwbt_d8_flow_accumulation(\n  input = file.path(output_dir, \"dem_breached.tif\"),\n  output = file.path(output_dir, \"d8_accum.tif\"),\n  out_type = \"specific contributing area\",\n  log = FALSE\n)\ndem_breached_d8_accum &lt;- rast(file.path(\n  output_dir,\n  \"d8_accum.tif\"\n))\nplot(dem_breached_d8_accum, axes = FALSE, main = \"Flow Accumulation (D8)\")\n\n\n\n\n\n\n\n\nこれはD8アルゴリズムを使用して流域の蓄積量を計算します。 out_type = \"specific contributing area\"は、比集水面積（単位幅あたりの寄与集水面積）を出力することを意味します。\nほかには、D-infinity flow accumulationを計算するwbt_d_inf_flow_accumulation()関数、FD8 flow accumulationを計算するwbt_fd8_flow_accumulation()関数などもあります。 私もまだ勉強中ですが、解析によって使い分ける必要があるようです。"
+  },
+  {
+    "objectID": "notebooks/topographic_wetness_index.html#slope",
+    "href": "notebooks/topographic_wetness_index.html#slope",
+    "title": "地形湿潤指数の計算",
+    "section": "Slope",
+    "text": "Slope\n次に、傾斜を計算します。 wbt_slope()関数を使用して、DEMから傾斜を計算します。\n\nwbt_slope(\n  dem = file.path(output_dir, \"dem_breached.tif\"),\n  output = file.path(output_dir, \"d8_slope.tif\"),\n  units = \"degrees\"\n)\ndem_breached_slope &lt;- rast(file.path(\n  output_dir,\n  \"d8_slope.tif\"\n))\nplot(dem_breached_slope, axes = FALSE, main = \"Slope (degrees)\")"
+  },
+  {
+    "objectID": "notebooks/topographic_wetness_index.html#twi-topographic-wetness-index",
+    "href": "notebooks/topographic_wetness_index.html#twi-topographic-wetness-index",
+    "title": "地形湿潤指数の計算",
+    "section": "TWI (Topographic Wetness Index)",
+    "text": "TWI (Topographic Wetness Index)\nTWIを計算するには、wbt_wetness_index()関数を使用します。この関数は、流域の蓄積量と傾斜を入力として受け取り、TWIを計算します。\n\nwbt_wetness_index(\n  sca = file.path(output_dir, \"d8_accum.tif\"),\n  slope = file.path(output_dir, \"d8_slope.tif\"),\n  output = file.path(output_dir, \"d8_twi.tif\")\n)\ntwi &lt;- rast(file.path(output_dir, \"d8_twi.tif\"))\n\nplot(twi, axes = FALSE, main = \"TWI (Topographic Wetness Index)\")"
+  },
+  {
+    "objectID": "notebooks/dem_download.html",
+    "href": "notebooks/dem_download.html",
+    "title": "DEMデータの準備",
+    "section": "",
+    "text": "国土地理院の基盤地図情報ダウンロードサービスから、DEM（数値標高モデル）を取得します。\n\n基盤地図情報ダウンロードサービス\n\n座標参照系が「JGD2011」から「JGD2024」に変更となっているらしい。\n1次メッシュごとに選択なので、以下のサイトなどを参考にしながら、必要な範囲の2次メッシュを特定すると、ダウンロードデータを最小限にできます。\n\n電子地形図（2次メッシュ定型版）刊行範囲 | 国土地理院"
+  },
+  {
+    "objectID": "notebooks/dem_download.html#ダウンロード",
+    "href": "notebooks/dem_download.html#ダウンロード",
+    "title": "DEMデータの準備",
+    "section": "",
+    "text": "国土地理院の基盤地図情報ダウンロードサービスから、DEM（数値標高モデル）を取得します。\n\n基盤地図情報ダウンロードサービス\n\n座標参照系が「JGD2011」から「JGD2024」に変更となっているらしい。\n1次メッシュごとに選択なので、以下のサイトなどを参考にしながら、必要な範囲の2次メッシュを特定すると、ダウンロードデータを最小限にできます。\n\n電子地形図（2次メッシュ定型版）刊行範囲 | 国土地理院"
+  },
+  {
+    "objectID": "notebooks/dem_download.html#tif形式への変換",
+    "href": "notebooks/dem_download.html#tif形式への変換",
+    "title": "DEMデータの準備",
+    "section": "tif形式への変換",
+    "text": "tif形式への変換\n基盤地図情報ダウンロードサービスのデータはzipファイルで提供されており、展開すると、xmlファイルが含まれています。\n扱いやすくするために、geotiff形式（.tif）に変換します。 もっとも簡単な方法は、QGISのQuickDEM4JPプラグインを使うことです。\nこれにより、簡単にtif形式のDEMを作成できます。"
+  },
+  {
+    "objectID": "notebooks/dem_download.html#トリミング",
+    "href": "notebooks/dem_download.html#トリミング",
+    "title": "DEMデータの準備",
+    "section": "トリミング",
+    "text": "トリミング\nそのままだと大きすぎる場合は、whiteboxのclip_raster関数を使って、必要な範囲にトリミングします。\nもしGUIで操作したい場合は、WhiteboxTools GUIを使うと便利です。\nまた、QGISでトリミング"
+  },
+  {
+    "objectID": "en/notebooks/topographic_wetness_index.html",
+    "href": "en/notebooks/topographic_wetness_index.html",
+    "title": "Calculating the Topographic Wetness Index",
+    "section": "",
+    "text": "Note\n\n\n\nJapanese version"
+  },
+  {
+    "objectID": "en/notebooks/topographic_wetness_index.html#overview",
+    "href": "en/notebooks/topographic_wetness_index.html#overview",
+    "title": "Calculating the Topographic Wetness Index",
+    "section": "Overview",
+    "text": "Overview\nThis notebook shows how to calculate the Topographic Wetness Index (TWI) from a DEM (digital elevation model) with the R package whitebox."
+  },
+  {
+    "objectID": "en/notebooks/topographic_wetness_index.html#workflow",
+    "href": "en/notebooks/topographic_wetness_index.html#workflow",
+    "title": "Calculating the Topographic Wetness Index",
+    "section": "Workflow",
+    "text": "Workflow\nThe workflow is as follows.\n\n\n\n\n\ngraph TD\n    A[Read DEM] --&gt; B[Depression breaching]\n    B --&gt; C[Calculate flow accumulation]\n    C --&gt; D[Calculate slope]\n    D --&gt; E[Calculate TWI]"
+  },
+  {
+    "objectID": "en/notebooks/topographic_wetness_index.html#setup",
+    "href": "en/notebooks/topographic_wetness_index.html#setup",
+    "title": "Calculating the Topographic Wetness Index",
+    "section": "Setup",
+    "text": "Setup\nIf this is your first time using whitebox, run the following code to install WhiteboxTools. The calculation itself is performed by the external WhiteboxTools executable; R works as an interface to call it.\n\n# Run only once if needed\n# renv::install(\"terra\")\n# renv::install(\"whitebox\")\nwhitebox::install_whitebox()\n\nLoad the libraries. The terra package is used for raster data handling. The whitebox package is used to call WhiteboxTools from R.\n\nlibrary(terra)\n\nterra 1.9.34\n\nlibrary(whitebox)\n\n# Get the WhiteboxTools executable path and confirm that it exists\nwbt_path &lt;- wbt_exe_path(shell_quote = FALSE)\nif (!whitebox::check_whitebox_binary()) {\n  stop(\n    \"WhiteboxTools executable was not found: \",\n    wbt_path,\n    \"\\n\",\n    \"Run whitebox::install_whitebox() once, then rerun this notebook.\",\n    call. = FALSE\n  )\n}\n\n# Check the WhiteboxTools path and version\nwbt_path\n\n[1] \"/home/runner/.local/share/R/whitebox/WBT/whitebox_tools\"\n\nwhitebox::wbt_version()\n\n# Create the output directory\noutput_dir &lt;- \"output\"\ndir.create(output_dir, showWarnings = FALSE)"
+  },
+  {
+    "objectID": "en/notebooks/topographic_wetness_index.html#read-and-visualize-the-dem",
+    "href": "en/notebooks/topographic_wetness_index.html#read-and-visualize-the-dem",
+    "title": "Calculating the Topographic Wetness Index",
+    "section": "Read and visualize the DEM",
+    "text": "Read and visualize the DEM\nThis example uses sample data from the whitebox package.\n\ndem_path &lt;- sample_dem_data()\ndem &lt;- rast(dem_path)\nprint(dem)\n\nclass       : SpatRaster\nsize        : 188, 237, 1  (nrow, ncol, nlyr)\nresolution  : 90, 90  (x, y)\nextent      : 664692, 686022, 4878904, 4895824  (xmin, xmax, ymin, ymax)\ncoord. ref. : NAD83 / UTM zone 18N (EPSG:26918)\nsource      : DEM.tif\nname        :         DEM\nmin value   :  212.229813\nmax value   : 1232.878296\n\n# Visualization\nplot(dem, axes = FALSE, main = \"DEM (Original)\")\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nImportantCoordinate Reference System\n\n\n\nThe DEM must use a projected coordinate reference system. If it uses a geographic coordinate reference system, distance and area calculations are not accurate, and the resulting TWI may be unreliable.\nThe following code checks whether the CRS is set and whether it is projected.\n\n# Check the coordinate reference system\nif (!nzchar(crs(dem))) {\n  stop(\"DEM has no coordinate reference system.\", call. = FALSE)\n}\n# Check whether the DEM uses a projected coordinate reference system\nif (isTRUE(is.lonlat(dem))) {\n  stop(\"DEM must use a projected coordinate reference system.\", call. = FALSE)\n}"
+  },
+  {
+    "objectID": "en/notebooks/topographic_wetness_index.html#depression-breaching",
+    "href": "en/notebooks/topographic_wetness_index.html#depression-breaching",
+    "title": "Calculating the Topographic Wetness Index",
+    "section": "Depression breaching",
+    "text": "Depression breaching\nFirst, run depression breaching to remove depressions from the DEM. This is an important preprocessing step for hydrological terrain analysis.\nThe wbt_breach_depressions_least_cost() function performs depression breaching. The required arguments are:\n\ndem: file path to the input DEM\noutput: file path for the output raster\ndist: search distance for removing depressions; the unit depends on the DEM coordinate system\n\nThe fill argument is TRUE by default, which fills unresolved depressions after breaching. In most cases, leaving fill = TRUE should be fine.\n\nwbt_breach_depressions_least_cost(\n  dem = dem_path,\n  output = file.path(output_dir, \"dem_breached.tif\"),\n  dist = 20,\n  fill = TRUE\n)\ndem_breached &lt;- rast(file.path(output_dir, \"dem_breached.tif\"))\n\nCompare the breached DEM with the original DEM.\n\n# Compare the breached DEM with the original DEM\nlocal({\n  old_mar &lt;- par(\"mar\")\n  on.exit(par(mar = old_mar), add = TRUE)\n\n  par(mar = c(2, 1, 2, 1))\n  plot(dem, axes = FALSE, main = \"DEM (Original)\")\n  plot(dem_breached, axes = FALSE, main = \"DEM (Breached Depressions)\")\n  plot(\n    dem - dem_breached,\n    axes = FALSE,\n    main = \"Difference (Original - Breached)\"\n  )\n})\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nIn this sample data, elevation changes caused by depression breaching were very small."
+  },
+  {
+    "objectID": "en/notebooks/topographic_wetness_index.html#flow-accumulation",
+    "href": "en/notebooks/topographic_wetness_index.html#flow-accumulation",
+    "title": "Calculating the Topographic Wetness Index",
+    "section": "Flow accumulation",
+    "text": "Flow accumulation\nNext, calculate flow accumulation. This step estimates how much upslope contributing area flows into each cell.\n\nwbt_d8_flow_accumulation(\n  input = file.path(output_dir, \"dem_breached.tif\"),\n  output = file.path(output_dir, \"d8_accum.tif\"),\n  out_type = \"specific contributing area\",\n  log = FALSE\n)\ndem_breached_d8_accum &lt;- rast(file.path(\n  output_dir,\n  \"d8_accum.tif\"\n))\nplot(dem_breached_d8_accum, axes = FALSE, main = \"Flow Accumulation (D8)\")\n\n\n\n\n\n\n\n\nThis calculates flow accumulation with the D8 algorithm. out_type = \"specific contributing area\" means that the output is specific catchment area, or contributing area per unit contour width.\nOther options include wbt_d_inf_flow_accumulation() for D-infinity flow accumulation and wbt_fd8_flow_accumulation() for FD8 flow accumulation. I am still learning the details, but the appropriate method appears to depend on the analysis."
+  },
+  {
+    "objectID": "en/notebooks/topographic_wetness_index.html#slope",
+    "href": "en/notebooks/topographic_wetness_index.html#slope",
+    "title": "Calculating the Topographic Wetness Index",
+    "section": "Slope",
+    "text": "Slope\nNext, calculate slope from the DEM with wbt_slope().\n\nwbt_slope(\n  dem = file.path(output_dir, \"dem_breached.tif\"),\n  output = file.path(output_dir, \"d8_slope.tif\"),\n  units = \"degrees\"\n)\ndem_breached_slope &lt;- rast(file.path(\n  output_dir,\n  \"d8_slope.tif\"\n))\nplot(dem_breached_slope, axes = FALSE, main = \"Slope (degrees)\")"
+  },
+  {
+    "objectID": "en/notebooks/topographic_wetness_index.html#twi-topographic-wetness-index",
+    "href": "en/notebooks/topographic_wetness_index.html#twi-topographic-wetness-index",
+    "title": "Calculating the Topographic Wetness Index",
+    "section": "TWI (Topographic Wetness Index)",
+    "text": "TWI (Topographic Wetness Index)\nUse wbt_wetness_index() to calculate TWI. This function takes flow accumulation and slope rasters as inputs and calculates the Topographic Wetness Index.\n\nwbt_wetness_index(\n  sca = file.path(output_dir, \"d8_accum.tif\"),\n  slope = file.path(output_dir, \"d8_slope.tif\"),\n  output = file.path(output_dir, \"d8_twi.tif\")\n)\ntwi &lt;- rast(file.path(output_dir, \"d8_twi.tif\"))\n\nplot(twi, axes = FALSE, main = \"TWI (Topographic Wetness Index)\")"
+  },
+  {
+    "objectID": "en/notebooks/dem_download.html",
+    "href": "en/notebooks/dem_download.html",
+    "title": "Preparing DEM Data",
+    "section": "",
+    "text": "Note\n\n\n\nJapanese version"
+  },
+  {
+    "objectID": "en/notebooks/dem_download.html#download",
+    "href": "en/notebooks/dem_download.html#download",
+    "title": "Preparing DEM Data",
+    "section": "Download",
+    "text": "Download\nDownload a DEM (digital elevation model) from the Geospatial Information Authority of Japan’s Fundamental Geospatial Data Download Service.\n\nFundamental Geospatial Data Download Service\n\nThe coordinate reference system appears to have changed from “JGD2011” to “JGD2024”.\nBecause the data are selected by first-level mesh, it is useful to identify the second-level mesh that covers your target area first. The following GSI page can help you keep the downloaded data as small as possible.\n\nPublication range for Digital Topographic Map second-level mesh sheets | GSI"
+  },
+  {
+    "objectID": "en/notebooks/dem_download.html#convert-to-tif",
+    "href": "en/notebooks/dem_download.html#convert-to-tif",
+    "title": "Preparing DEM Data",
+    "section": "Convert to tif",
+    "text": "Convert to tif\nData from the Fundamental Geospatial Data Download Service are distributed as zip files. After extracting them, you will find XML files.\nFor easier analysis, convert them to GeoTIFF (.tif). The easiest option is to use the QGIS QuickDEM4JP plugin.\nThis plugin makes it straightforward to create a DEM in tif format."
+  },
+  {
+    "objectID": "en/notebooks/dem_download.html#crop",
+    "href": "en/notebooks/dem_download.html#crop",
+    "title": "Preparing DEM Data",
+    "section": "Crop",
+    "text": "Crop\nIf the DEM is too large, crop it to the required extent with the clip_raster function from whitebox.\nIf you prefer a GUI workflow, WhiteboxTools GUI is also useful.\nYou can also crop rasters in QGIS."
+  },
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "DEMからTWI/TPIを計算する",
+    "section": "",
+    "text": "このサイトでは、DEM (数値標高モデル)から地形湿潤指数 (Topographic Wetness Index, TWI)や地形位置指数 (Topographic Position Index, TPI)をR実装する方法についてまとめました。\n英語版は上部のEnglishタブ、またはEnglish versionからアクセスできます。"
+  },
+  {
+    "objectID": "index.html#notebooks",
+    "href": "index.html#notebooks",
+    "title": "DEMからTWI/TPIを計算する",
+    "section": "Notebooks",
+    "text": "Notebooks\nDEMデータの準備からTWI/TPIの計算まで、ノートブックでまとめました。 上部のNotebooksメニューもしくは以下のリンクからアクセスできます。\n\nDEMデータの準備 (未完成)\nRによる地形湿潤指数 (TWI)の計算\nRによる地形位置指数 (TPI)の計算\nQGISによるTWIとTPIの計算"
+  },
+  {
+    "objectID": "index.html#app",
+    "href": "index.html#app",
+    "title": "DEMからTWI/TPIを計算する",
+    "section": "App",
+    "text": "App\nShinyliveという、静的サイト上でShinyアプリを動かす仕組みを使って、合成DEMによるTWIの概念デモを公開しています。 ページ上部のShinylive Appもしくは以下のリンクからアクセスできます。\n\nTWIの概念デモ\n\nWhiteboxToolsをShinyliveで動作させるのはどうやら難しそうだったので、完全なアプリケーションではありません。\nまた、自分のDEMやサンプルデータを使ってTWIやTPIを計算するアプリケーションも公開しています。 ご興味があればお試しください。 ページ上部のTWI/TPI計算アプリもしくは以下のリンクからアクセスできます。\n\nTWI/TPI計算\n\nこちらのアプリケーションは、Posit connect cloudというホスティングサービス上で動作しています。 コードは以下からご確認いただけます。\n\nmaple60/dem-terrain-indices-app"
+  },
+  {
+    "objectID": "index.html#その他",
+    "href": "index.html#その他",
+    "title": "DEMからTWI/TPIを計算する",
+    "section": "その他",
+    "text": "その他\nもしコードを閲覧したり、自分で実行したりしたい場合は、右上のGitHubアイコンからリポジトリにアクセスできます。\nまた、本リポジトリでは、Rのパッケージ管理にrenvを使用しています。 リポジトリをクローンした後、Rコンソールで以下のコマンドを実行することで、必要なパッケージをインストールできます。\n# install.packages(\"renv\") # まだインストールしていない場合\nrenv::restore()"
+  },
+  {
+    "objectID": "en/notebooks/topographic_position_index.html",
+    "href": "en/notebooks/topographic_position_index.html",
+    "title": "Calculating the Topographic Position Index",
+    "section": "",
+    "text": "Note\n\n\n\nJapanese version\n\n\nThe Topographic Position Index (TPI) is an index for quantifying the local position of terrain. It is calculated as the difference between the elevation of a target cell and the mean elevation of its surrounding cells. Positive values indicate that the cell is higher than its surroundings, while negative values indicate that it is lower.\n\\[\nTPI = elevation - mean elevation of surrounding cells\n\\]\nHere, we calculate TPI from a DEM (Digital Elevation Model) with the R package terra.\nThe example uses sample data from the whitebox package.\n\n# install.packages(\"terra\") # if terra is not installed yet\n# renv::install(\"terra\") # if you use renv\n# install.packages(\"whitebox\") # if whitebox is not installed yet\n# renv::install(\"whitebox\") # if you use renv\nlibrary(terra)\n\nterra 1.9.34\n\nlibrary(whitebox)\n\ndem_path &lt;- sample_dem_data()\ndem &lt;- rast(dem_path)\nplot(dem)\n\n\n\n\n\n\n\n\nAfter deciding how many surrounding cells to use for each elevation value, use terra::focal() to calculate the mean elevation of the neighboring cells. Here, we use a 3 x 3 window.\n\nw &lt;- matrix(1, nrow = 3, ncol = 3) # 3 x 3 window\nw[2, 2] &lt;- NA # exclude the center cell from the neighborhood mean\n\nmean_neigh &lt;- focal(\n  dem,\n  w = w,\n  fun = mean,\n  na.rm = TRUE\n)\n\ntpi_3_3 &lt;- dem - mean_neigh\nplot(tpi_3_3, main = \"TPI (3x3)\")\n\n\n\n\n\n\n\n\nInterpretation is as follows.\n\n\n\n\n\n\n\nTPI\nMeaning\n\n\n\n\nPositive\nHigher than the surroundings; closer to a ridge or convex landform\n\n\nAround 0\nSimilar to the surroundings\n\n\nNegative\nLower than the surroundings; closer to a valley or concave landform\n\n\n\nThe spatial scale used for TPI should be chosen according to the purpose of the analysis."
+  },
+  {
+    "objectID": "en/notebooks/topographic_wetness_index_qgis.html",
+    "href": "en/notebooks/topographic_wetness_index_qgis.html",
+    "title": "Calculating the Topographic Wetness Index (TWI) with QGIS",
+    "section": "",
+    "text": "Note\n\n\n\nJapanese version\nThis page introduces how to calculate the Topographic Wetness Index (TWI) in QGIS. TWI is an index for evaluating relative terrain wetness and is important in watershed analysis and hydrological research. It can also be calculated with tools such as SAGA GIS and GRASS GIS, but here we use WhiteboxTools directly from QGIS."
+  },
+  {
+    "objectID": "en/notebooks/topographic_wetness_index_qgis.html#load-the-dem",
+    "href": "en/notebooks/topographic_wetness_index_qgis.html#load-the-dem",
+    "title": "Calculating the Topographic Wetness Index (TWI) with QGIS",
+    "section": "Load the DEM",
+    "text": "Load the DEM\n\nOpen the Data Source Manager.\nSelect the “Raster” tab and load the DEM (digital elevation model). The .tif extension is common.\n\n\n\n\nLoad the DEM\n\n\n\nConfirm that the loaded DEM appears in the QGIS Layers panel.\nIf necessary, clip the raster. You can do this from the “Raster” menu under “Extraction”.\n\n\n\n\nClip the raster"
+  },
+  {
+    "objectID": "en/notebooks/topographic_wetness_index_qgis.html#set-the-coordinate-reference-system",
+    "href": "en/notebooks/topographic_wetness_index_qgis.html#set-the-coordinate-reference-system",
+    "title": "Calculating the Topographic Wetness Index (TWI) with QGIS",
+    "section": "Set the coordinate reference system",
+    "text": "Set the coordinate reference system\n\nCheck the DEM coordinate reference system. Right-click the layer and select “Layer CRS” and then “Set Layer CRS”.\nSet a projected coordinate reference system in meters. In Japan, the JGD2011 Japan Plane Rectangular CS can be used. For example, EPSG:6674 is suitable around Kyoto. See the GSI page for the Japan Plane Rectangular Coordinate System.\n\n\n\n\nSet the coordinate reference system"
+  },
+  {
+    "objectID": "en/notebooks/topographic_wetness_index_qgis.html#breaching-depressions",
+    "href": "en/notebooks/topographic_wetness_index_qgis.html#breaching-depressions",
+    "title": "Calculating the Topographic Wetness Index (TWI) with QGIS",
+    "section": "Breaching depressions",
+    "text": "Breaching depressions\nBreaching depressions removes low spots and pits in the DEM. This improves the accuracy of watershed analysis. If this step is skipped, water may be trapped in small depressions, causing flow paths to stop or point in unnatural directions.\n\nType “Breach Depressions” in the search box on the Whitebox Workflows tab.\n\n\n\n\nSearch for Breach Depressions\n\n\n\nDouble-click Breach Depressions Least Cost to open the tool window.\n\nMaximum search distance in cells specifies the maximum search distance, in cells, for removing depressions. Choose an appropriate value based on the resolution and purpose. In this example, the DEM resolution was 1 m, so 20 cells were used to remove depressions within about 20 m.\nFill unresolved depression after breaching specifies whether unresolved depressions are filled after breaching. It was checked in this example.\nSpecify an output file path if needed. It was not specified in this example.\n\n\n\n\n\nBreach Depressions Least Cost\n\n\n\nCheck the result. In many cases, the changes may be small. You can also compare the original DEM and the processed DEM with the Raster Calculator.\n\n\n\n\nCompare with the original DEM"
+  },
+  {
+    "objectID": "en/notebooks/topographic_wetness_index_qgis.html#calculate-flow-direction",
+    "href": "en/notebooks/topographic_wetness_index_qgis.html#calculate-flow-direction",
+    "title": "Calculating the Topographic Wetness Index (TWI) with QGIS",
+    "section": "Calculate flow direction",
+    "text": "Calculate flow direction\n\nSearch for “D8 Pointer” and double-click D8 Pointer.\n\n\n\n\nSearch for D8 Pointer\n\n\n\nIn most cases, the defaults are fine. Click Run. You can also specify an output file path.\nCheck the result. A raster showing flow direction is generated.\n\n\n\n\nCheck flow direction\n\n\n\n\n\n\n\n\nNote\n\n\n\nThis example uses the D8 algorithm, but D-infinity and FD algorithms can also be used."
+  },
+  {
+    "objectID": "en/notebooks/topographic_wetness_index_qgis.html#calculate-flow-accumulation",
+    "href": "en/notebooks/topographic_wetness_index_qgis.html#calculate-flow-accumulation",
+    "title": "Calculating the Topographic Wetness Index (TWI) with QGIS",
+    "section": "Calculate flow accumulation",
+    "text": "Calculate flow accumulation\n\nSearch for “D8 Flow Accumulation” and double-click D8 Flow Accumulation.\n\n\n\n\nSearch for D8 Flow Accumulation\n\n\n\nFor Input DEM, choose the D8 Pointer raster created above.\nFor Output type, select sca. This calculates flow accumulation as specific catchment area. sca stands for Specific Catchment Area, which means contributing area per unit contour width.\nCheck “Treat input as D8 pointer raster”. This tells the tool that the input is a D8 Pointer raster.\nRun the tool and check the result.\n\n\n\n\nCheck flow accumulation"
+  },
+  {
+    "objectID": "en/notebooks/topographic_wetness_index_qgis.html#calculate-slope",
+    "href": "en/notebooks/topographic_wetness_index_qgis.html#calculate-slope",
+    "title": "Calculating the Topographic Wetness Index (TWI) with QGIS",
+    "section": "Calculate slope",
+    "text": "Calculate slope\n\nSearch for “Slope” and double-click Slope.\n\n\n\n\nSearch for Slope\n\n\n\nFor Input DEM, select the DEM produced by breaching depressions.\nFor Output unit, select degree.\nSet Z conversion factor to 1.0 or leave it unset. Use this when the vertical and horizontal units of the DEM are the same. If the vertical unit differs, set an appropriate conversion factor.\n\n\n\n\nCalculate slope\n\n\n\nRun the tool and check the result.\n\n\n\n\nCheck slope"
+  },
+  {
+    "objectID": "en/notebooks/topographic_wetness_index_qgis.html#calculate-the-topographic-wetness-index-twi",
+    "href": "en/notebooks/topographic_wetness_index_qgis.html#calculate-the-topographic-wetness-index-twi",
+    "title": "Calculating the Topographic Wetness Index (TWI) with QGIS",
+    "section": "Calculate the Topographic Wetness Index (TWI)",
+    "text": "Calculate the Topographic Wetness Index (TWI)\n\nSearch for “Wetness Index” and double-click Wetness Index.\n\n\n\n\nSearch for Wetness Index\n\n\n\nFor Specific catchment area raster, select the flow accumulation raster calculated above.\nFor Slope raster, select the slope raster calculated above.\n\n\n\n\nCalculate Wetness Index\n\n\n\nRun the tool and check the result. A TWI raster is generated.\n\n\n\n\nCheck TWI"
+  },
+  {
+    "objectID": "en/notebooks/topographic_wetness_index_qgis.html#optional-make-the-result-easier-to-read",
+    "href": "en/notebooks/topographic_wetness_index_qgis.html#optional-make-the-result-easier-to-read",
+    "title": "Calculating the Topographic Wetness Index (TWI) with QGIS",
+    "section": "Optional: make the result easier to read",
+    "text": "Optional: make the result easier to read\nBy default, the color scale is often gray. To make the TWI values easier to interpret visually, change the color scale.\n\nRight-click the layer and select “Properties”.\nIn the “Symbology” tab, set the following:\n\nRender type: Singleband pseudocolor\nInterpolation: Linear\nColor ramp: any color ramp. Viridis was used here.\n\n\n\n\n\nSet symbology\n\n\n\nClick Apply. The TWI values are now shown with colors and are easier to interpret visually.\n\n\n\n\nChange the color scale"
+  },
+  {
+    "objectID": "en/notebooks/topographic_wetness_index_qgis.html#bonus-calculate-the-topographic-position-index-tpi",
+    "href": "en/notebooks/topographic_wetness_index_qgis.html#bonus-calculate-the-topographic-position-index-tpi",
+    "title": "Calculating the Topographic Wetness Index (TWI) with QGIS",
+    "section": "Bonus: calculate the Topographic Position Index (TPI)",
+    "text": "Bonus: calculate the Topographic Position Index (TPI)\nThe Topographic Position Index evaluates terrain convexity, concavity, and local position. TPI is calculated from the difference between a cell’s elevation and the surrounding elevation.\n\nSearch for “Difference From Mean Elevation” and double-click Difference From Mean Elevation.\n\n\n\n\nSearch for Difference From Mean Elevation\n\n\n\nFor Input DEM, select the original DEM.\nOdd filter width in cells specifies the number of horizontal cells. In this example, the default value of 11 cells was used. Choose an appropriate value according to the DEM resolution and the analysis purpose.\nOdd filter height in cells is the corresponding vertical cell count. In this example, the default value of 11 cells was used. In many cases, the horizontal and vertical cell counts should be the same.\n\n\n\n\nSet Difference From Mean Elevation\n\n\n\nRun the tool and check the result. A TPI raster is generated.\n\n\n\n\nCheck TPI"
+  },
+  {
+    "objectID": "notebooks/topographic_position_index.html",
+    "href": "notebooks/topographic_position_index.html",
+    "title": "地形位置指数の計算",
+    "section": "",
+    "text": "地形位置指数 (Topological Position Index, TPI) は、地形の局所的な位置を定量化するための指標です。 TPIは、対象となる地点の標高と、その周囲の標高の平均値との差を計算することで求められます。正の値はその地点が周囲よりも高いことを示し、負の値は低いことを示します。\n\\[\nTPI = 標高 - 周辺セルの平均標高\n\\]\nRのterraパッケージを使用して、DEM (Digital Elevation Model) からTPIを計算してみます。\nデータは、whiteboxパッケージのサンプルデータを使用します。\n\n# install.packages(\"terra\") # まだインストールしていない場合\n# renv::install(\"terra\") # renvを使用している場合\n# install.packages(\"whitebox\") # まだインストールしていない場合\n# renv::install(\"whitebox\") # renvを使用している場合\nlibrary(terra)\n\nterra 1.9.34\n\nlibrary(whitebox)\n\ndem_path &lt;- sample_dem_data()\ndem &lt;- rast(dem_path)\nplot(dem)\n\n\n\n\n\n\n\n\nある標高に対して、どの程度の周辺セルを参照するかを決めたうえで、terrain::focal()関数を使用して、周辺セルの平均標高を計算します。ここでは、3x3のウィンドウを使用して周辺セルの平均を計算します。\n\nw &lt;- matrix(1, nrow = 3, ncol = 3) # 3x3のウィンドウ\nw[2, 2] &lt;- NA # 中心セルは周辺平均から除外\n\nmean_neigh &lt;- focal(\n  dem,\n  w = w,\n  fun = mean,\n  na.rm = TRUE\n)\n\ntpi_3_3 &lt;- dem - mean_neigh\nplot(tpi_3_3, main = \"TPI (3x3)\")\n\n\n\n\n\n\n\n\n解釈は以下のようになります。\n\n\n\nTPI\n意味\n\n\n\n\n正\n周囲より高い。尾根・凸地形寄り\n\n\n0付近\n周囲と同程度\n\n\n負\n周囲より低い。谷・凹地形寄り\n\n\n\nどの規模でTPIを計算するかは、解析の目的に応じて決定する必要がありそうです。"
+  },
+  {
     "objectID": "notebooks/topographic_wetness_index_qgis.html",
     "href": "notebooks/topographic_wetness_index_qgis.html",
     "title": "QGISで地形湿潤指数 (TWI) を計算する",
@@ -68,131 +390,5 @@
     "title": "QGISで地形湿潤指数 (TWI) を計算する",
     "section": "(おまけ)地形位置指標 (TPI)の計算",
     "text": "(おまけ)地形位置指標 (TPI)の計算\n地形位置指標は、地形の凸凹や位置を評価するための指標です。TPIは、周囲の標高との差を計算することで、地形の特徴を把握することができます。\n\n検索窓で「Difference From Mean Elevation」を検索し、表示された「Difference From Mean Elevation」をダブルクリックしてツールウィンドウを開きます\n\n\n\n\nDifference From Mean Elevationを検索する\n\n\n\nInput DEMは、元のDEMを指定します。\nOdd filter width in cellsは、横方向のセル数を指定します。今回はデフォルトの11セルを指定しました。DEMの解像度や目的に応じて適切な値を設定する必要があります。\nOdd filter height in cellsも同様に、縦方向のセル数を指定します。今回はデフォルトの11セルを指定しました。基本的には、横方向と縦方向のセル数は同じ値を指定することが多いと思います。\n\n\n\n\nDifference From Mean Elevationの設定\n\n\n\n実行し、結果を確認します。TPIのラスタが生成されます。\n\n\n\n\nTPIの確認"
-  },
-  {
-    "objectID": "notebooks/topographic_position_index.html",
-    "href": "notebooks/topographic_position_index.html",
-    "title": "地形位置指数の計算",
-    "section": "",
-    "text": "地形位置指数 (Topological Position Index, TPI) は、地形の局所的な位置を定量化するための指標です。 TPIは、対象となる地点の標高と、その周囲の標高の平均値との差を計算することで求められます。正の値はその地点が周囲よりも高いことを示し、負の値は低いことを示します。\n\\[\nTPI = 標高 - 周辺セルの平均標高\n\\]\nRのterraパッケージを使用して、DEM (Digital Elevation Model) からTPIを計算してみます。\nデータは、whiteboxパッケージのサンプルデータを使用します。\n\n# install.packages(\"terra\") # まだインストールしていない場合\n# renv::install(\"terra\") # renvを使用している場合\n# install.packages(\"whitebox\") # まだインストールしていない場合\n# renv::install(\"whitebox\") # renvを使用している場合\nlibrary(terra)\n\nterra 1.9.34\n\nlibrary(whitebox)\n\ndem_path &lt;- sample_dem_data()\ndem &lt;- rast(dem_path)\nplot(dem)\n\n\n\n\n\n\n\n\nある標高に対して、どの程度の周辺セルを参照するかを決めたうえで、terrain::focal()関数を使用して、周辺セルの平均標高を計算します。ここでは、3x3のウィンドウを使用して周辺セルの平均を計算します。\n\nw &lt;- matrix(1, nrow = 3, ncol = 3) # 3x3のウィンドウ\nw[2, 2] &lt;- NA # 中心セルは周辺平均から除外\n\nmean_neigh &lt;- focal(\n  dem,\n  w = w,\n  fun = mean,\n  na.rm = TRUE\n)\n\ntpi_3_3 &lt;- dem - mean_neigh\nplot(tpi_3_3, main = \"TPI (3x3)\")\n\n\n\n\n\n\n\n\n解釈は以下のようになります。\n\n\n\nTPI\n意味\n\n\n\n\n正\n周囲より高い。尾根・凸地形寄り\n\n\n0付近\n周囲と同程度\n\n\n負\n周囲より低い。谷・凹地形寄り\n\n\n\nどの規模でTPIを計算するかは、解析の目的に応じて決定する必要がありそうです。"
-  },
-  {
-    "objectID": "index.html",
-    "href": "index.html",
-    "title": "DEMからTWI/TPIを計算する",
-    "section": "",
-    "text": "このサイトでは、DEM (数値標高モデル)から地形湿潤指数 (Topographic Wetness Index, TWI)や地形位置指数 (Topographic Position Index, TPI)をR実装する方法についてまとめました。"
-  },
-  {
-    "objectID": "index.html#notebooks",
-    "href": "index.html#notebooks",
-    "title": "DEMからTWI/TPIを計算する",
-    "section": "Notebooks",
-    "text": "Notebooks\nDEMデータの準備からTWI/TPIの計算まで、ノートブックでまとめました。 上部のNotebooksメニューもしくは以下のリンクからアクセスできます。\n\nDEMデータの準備 (未完成)\nRによる地形湿潤指数 (TWI)の計算\nRによる地形位置指数 (TPI)の計算\nQGISによるTWIとTPIの計算"
-  },
-  {
-    "objectID": "index.html#app",
-    "href": "index.html#app",
-    "title": "DEMからTWI/TPIを計算する",
-    "section": "App",
-    "text": "App\nShinyliveという、静的サイト上でShinyアプリを動かす仕組みを使って、合成DEMによるTWIの概念デモを公開しています。 ページ上部のShinylive Appもしくは以下のリンクからアクセスできます。\n\nTWIの概念デモ\n\nWhiteboxToolsをShinyliveで動作させるのはどうやら難しそうだったので、完全なアプリケーションではありません。\nまた、自分のDEMやサンプルデータを使ってTWIやTPIを計算するアプリケーションも公開しています。 ご興味があればお試しください。 ページ上部のTWI/TPI計算アプリもしくは以下のリンクからアクセスできます。\n\nTWI/TPI計算\n\nこちらのアプリケーションは、Posit connect cloudというホスティングサービス上で動作しています。 コードは以下からご確認いただけます。\n\nmaple60/dem-terrain-indices-app"
-  },
-  {
-    "objectID": "index.html#その他",
-    "href": "index.html#その他",
-    "title": "DEMからTWI/TPIを計算する",
-    "section": "その他",
-    "text": "その他\nもしコードを閲覧したり、自分で実行したりしたい場合は、右上のGitHubアイコンからリポジトリにアクセスできます。\nまた、本リポジトリでは、Rのパッケージ管理にrenvを使用しています。 リポジトリをクローンした後、Rコンソールで以下のコマンドを実行することで、必要なパッケージをインストールできます。\n# install.packages(\"renv\") # まだインストールしていない場合\nrenv::restore()"
-  },
-  {
-    "objectID": "notebooks/dem_download.html",
-    "href": "notebooks/dem_download.html",
-    "title": "DEMデータの準備",
-    "section": "",
-    "text": "国土地理院の基盤地図情報ダウンロードサービスから、DEM（数値標高モデル）を取得します。\n\n基盤地図情報ダウンロードサービス\n\n座標参照系が「JGD2011」から「JGD2024」に変更となっているらしい。\n1次メッシュごとに選択なので、以下のサイトなどを参考にしながら、必要な範囲の2次メッシュを特定すると、ダウンロードデータを最小限にできます。\n\n電子地形図（2次メッシュ定型版）刊行範囲 | 国土地理院"
-  },
-  {
-    "objectID": "notebooks/dem_download.html#ダウンロード",
-    "href": "notebooks/dem_download.html#ダウンロード",
-    "title": "DEMデータの準備",
-    "section": "",
-    "text": "国土地理院の基盤地図情報ダウンロードサービスから、DEM（数値標高モデル）を取得します。\n\n基盤地図情報ダウンロードサービス\n\n座標参照系が「JGD2011」から「JGD2024」に変更となっているらしい。\n1次メッシュごとに選択なので、以下のサイトなどを参考にしながら、必要な範囲の2次メッシュを特定すると、ダウンロードデータを最小限にできます。\n\n電子地形図（2次メッシュ定型版）刊行範囲 | 国土地理院"
-  },
-  {
-    "objectID": "notebooks/dem_download.html#tif形式への変換",
-    "href": "notebooks/dem_download.html#tif形式への変換",
-    "title": "DEMデータの準備",
-    "section": "tif形式への変換",
-    "text": "tif形式への変換\n基盤地図情報ダウンロードサービスのデータはzipファイルで提供されており、展開すると、xmlファイルが含まれています。\n扱いやすくするために、geotiff形式（.tif）に変換します。 もっとも簡単な方法は、QGISのQuickDEM4JPプラグインを使うことです。\nこれにより、簡単にtif形式のDEMを作成できます。"
-  },
-  {
-    "objectID": "notebooks/dem_download.html#トリミング",
-    "href": "notebooks/dem_download.html#トリミング",
-    "title": "DEMデータの準備",
-    "section": "トリミング",
-    "text": "トリミング\nそのままだと大きすぎる場合は、whiteboxのclip_raster関数を使って、必要な範囲にトリミングします。\nもしGUIで操作したい場合は、WhiteboxTools GUIを使うと便利です。\nまた、QGISでトリミング"
-  },
-  {
-    "objectID": "notebooks/topographic_wetness_index.html",
-    "href": "notebooks/topographic_wetness_index.html",
-    "title": "地形湿潤指数の計算",
-    "section": "",
-    "text": "whiteboxというRパッケージを使って、DEM (デジタル標高モデル)から地形湿潤指数 (Topographic Wetness Index, TWI)を計算する方法を示します。"
-  },
-  {
-    "objectID": "notebooks/topographic_wetness_index.html#概要",
-    "href": "notebooks/topographic_wetness_index.html#概要",
-    "title": "地形湿潤指数の計算",
-    "section": "",
-    "text": "whiteboxというRパッケージを使って、DEM (デジタル標高モデル)から地形湿潤指数 (Topographic Wetness Index, TWI)を計算する方法を示します。"
-  },
-  {
-    "objectID": "notebooks/topographic_wetness_index.html#解析の流れ",
-    "href": "notebooks/topographic_wetness_index.html#解析の流れ",
-    "title": "地形湿潤指数の計算",
-    "section": "解析の流れ",
-    "text": "解析の流れ\n解析の流れは以下のようになります。\n\n\n\n\n\ngraph TD\n    A[DEMの読み込み] --&gt; B[Depression breaching]\n    B --&gt; C[Flow Accumulationの計算]\n    C --&gt; D[傾斜の計算]\n    D --&gt; E[TWIの計算]"
-  },
-  {
-    "objectID": "notebooks/topographic_wetness_index.html#セットアップ",
-    "href": "notebooks/topographic_wetness_index.html#セットアップ",
-    "title": "地形湿潤指数の計算",
-    "section": "セットアップ",
-    "text": "セットアップ\n初めてwhiteboxを使用する場合は、以下のコードを実行して、WhiteboxToolsをインストールしてください。 Rで直接計算をするわけではなく、外部のWhiteboxToolsを使用して計算が行われます。 つまり、RはWhiteboxToolsを呼び出すためのインターフェースとして機能します。\n\n# 初回だけ必要に応じて実行する\n# renv::install(\"terra\")\n# renv::install(\"whitebox\")\nwhitebox::install_whitebox()\n\nライブラリを読み込みます。 terraパッケージは、ラスターデータの操作に使用します。 whiteboxパッケージは、WhiteboxToolsをRから呼び出すために使用します。\n\nlibrary(terra)\n\nterra 1.9.34\n\nlibrary(whitebox)\n\n# WhiteboxTools の実行可能ファイルのパスを取得し、存在を確認\nwbt_path &lt;- wbt_exe_path(shell_quote = FALSE)\nif (!whitebox::check_whitebox_binary()) {\n  stop(\n    \"WhiteboxTools executable was not found: \",\n    wbt_path,\n    \"\\n\",\n    \"Run whitebox::install_whitebox() once, then rerun this notebook.\",\n    call. = FALSE\n  )\n}\n\n# WhiteboxToolsのパスとバージョンを確認\nwbt_path\n\n[1] \"/home/runner/.local/share/R/whitebox/WBT/whitebox_tools\"\n\nwhitebox::wbt_version()\n\n# 出力ディレクトリの作成\noutput_dir &lt;- \"output\"\ndir.create(output_dir, showWarnings = FALSE)"
-  },
-  {
-    "objectID": "notebooks/topographic_wetness_index.html#demの読み込みと可視化",
-    "href": "notebooks/topographic_wetness_index.html#demの読み込みと可視化",
-    "title": "地形湿潤指数の計算",
-    "section": "DEMの読み込みと可視化",
-    "text": "DEMの読み込みと可視化\n今回は、whiteboxパッケージのサンプルデータを使用して解析を行います。\n\ndem_path &lt;- sample_dem_data()\ndem &lt;- rast(dem_path)\nprint(dem)\n\nclass       : SpatRaster\nsize        : 188, 237, 1  (nrow, ncol, nlyr)\nresolution  : 90, 90  (x, y)\nextent      : 664692, 686022, 4878904, 4895824  (xmin, xmax, ymin, ymax)\ncoord. ref. : NAD83 / UTM zone 18N (EPSG:26918)\nsource      : DEM.tif\nname        :         DEM\nmin value   :  212.229813\nmax value   : 1232.878296\n\n# 可視化\nplot(dem, axes = FALSE, main = \"DEM (Original)\")\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n重要座標系\n\n\n\n座標系は必ず投影座標系（Projected Coordinate System）である必要があります。 地理座標系（Geographic Coordinate System）では、距離や面積の計算が正確に行えないため、TWIの計算結果が不正確になる可能性があります。\n以下のコードで座標系が設定されているかどうか、投影座標かどうかを確認できます。\n\n# 座標系の確認\nif (!nzchar(crs(dem))) {\n  stop(\"DEM has no coordinate reference system.\", call. = FALSE)\n}\n# 投影座標系かどうかの確認\nif (isTRUE(is.lonlat(dem))) {\n  stop(\"DEM must use a projected coordinate reference system.\", call. = FALSE)\n}"
-  },
-  {
-    "objectID": "notebooks/topographic_wetness_index.html#depression-breaching",
-    "href": "notebooks/topographic_wetness_index.html#depression-breaching",
-    "title": "地形湿潤指数の計算",
-    "section": "Depression breaching",
-    "text": "Depression breaching\n最初に、DEMの凹地を除去するために、Depression breachingを行います。 この処理は、流域解析の前処理として重要です。\nwbt_breach_depressions_least_cost()関数を使用することで、depression breachingを行うことができます。 必要な引数は以下の通りです。\n\ndem: 入力DEMのファイルパス\noutput: 出力ファイルのパス\ndist: 凹地を除去するための距離（単位はDEMの座標系に依存します）\n\nfillはデフォルトでTRUEに設定されており、depression breaching後のDEMの凹地を埋める処理を行います。 基本的にはfill = TRUEのままで問題なさそうです。\n\nwbt_breach_depressions_least_cost(\n  dem = dem_path,\n  output = file.path(output_dir, \"dem_breached.tif\"),\n  dist = 20,\n  fill = TRUE\n)\ndem_breached &lt;- rast(file.path(output_dir, \"dem_breached.tif\"))\n\n元のDEMと比較します。\n\n# breached DEMと元のDEMを比較する\nlocal({\n  old_mar &lt;- par(\"mar\")\n  on.exit(par(mar = old_mar), add = TRUE)\n\n  par(mar = c(2, 1, 2, 1))\n  plot(dem, axes = FALSE, main = \"DEM (Original)\")\n  plot(dem_breached, axes = FALSE, main = \"DEM (Breached Depressions)\")\n  plot(\n    dem - dem_breached,\n    axes = FALSE,\n    main = \"Difference (Original - Breached)\"\n  )\n})\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n今回のデータでは、凹地の除去による標高の変化はほとんどありませんでした。"
-  },
-  {
-    "objectID": "notebooks/topographic_wetness_index.html#flow-accumulation",
-    "href": "notebooks/topographic_wetness_index.html#flow-accumulation",
-    "title": "地形湿潤指数の計算",
-    "section": "Flow Accumulation",
-    "text": "Flow Accumulation\n次に、flow accumulationを計算します。 これは、水流の蓄積量を計算する処理です。\n\nwbt_d8_flow_accumulation(\n  input = file.path(output_dir, \"dem_breached.tif\"),\n  output = file.path(output_dir, \"d8_accum.tif\"),\n  out_type = \"specific contributing area\",\n  log = FALSE\n)\ndem_breached_d8_accum &lt;- rast(file.path(\n  output_dir,\n  \"d8_accum.tif\"\n))\nplot(dem_breached_d8_accum, axes = FALSE, main = \"Flow Accumulation (D8)\")\n\n\n\n\n\n\n\n\nこれはD8アルゴリズムを使用して流域の蓄積量を計算します。 out_type = \"specific contributing area\"は、比集水面積（単位幅あたりの寄与集水面積）を出力することを意味します。\nほかには、D-infinity flow accumulationを計算するwbt_d_inf_flow_accumulation()関数、FD8 flow accumulationを計算するwbt_fd8_flow_accumulation()関数などもあります。 私もまだ勉強中ですが、解析によって使い分ける必要があるようです。"
-  },
-  {
-    "objectID": "notebooks/topographic_wetness_index.html#slope",
-    "href": "notebooks/topographic_wetness_index.html#slope",
-    "title": "地形湿潤指数の計算",
-    "section": "Slope",
-    "text": "Slope\n次に、傾斜を計算します。 wbt_slope()関数を使用して、DEMから傾斜を計算します。\n\nwbt_slope(\n  dem = file.path(output_dir, \"dem_breached.tif\"),\n  output = file.path(output_dir, \"d8_slope.tif\"),\n  units = \"degrees\"\n)\ndem_breached_slope &lt;- rast(file.path(\n  output_dir,\n  \"d8_slope.tif\"\n))\nplot(dem_breached_slope, axes = FALSE, main = \"Slope (degrees)\")"
-  },
-  {
-    "objectID": "notebooks/topographic_wetness_index.html#twi-topographic-wetness-index",
-    "href": "notebooks/topographic_wetness_index.html#twi-topographic-wetness-index",
-    "title": "地形湿潤指数の計算",
-    "section": "TWI (Topographic Wetness Index)",
-    "text": "TWI (Topographic Wetness Index)\nTWIを計算するには、wbt_wetness_index()関数を使用します。この関数は、流域の蓄積量と傾斜を入力として受け取り、TWIを計算します。\n\nwbt_wetness_index(\n  sca = file.path(output_dir, \"d8_accum.tif\"),\n  slope = file.path(output_dir, \"d8_slope.tif\"),\n  output = file.path(output_dir, \"d8_twi.tif\")\n)\ntwi &lt;- rast(file.path(output_dir, \"d8_twi.tif\"))\n\nplot(twi, axes = FALSE, main = \"TWI (Topographic Wetness Index)\")"
   }
 ]
